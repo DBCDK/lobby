@@ -1,0 +1,14 @@
+case "$1" in
+    docker)
+        echo "### building lobby service docker ###"
+        docker build -f target/docker/Dockerfile . -t lobby-service || exit 1
+        ;;
+
+    *)
+        echo "### building lobby project ###"
+        echo "### Look for build artifacts in target/ ###"
+
+        mvn package -Dmaven.test.skip=true || exit 1
+        ;;
+esac
+

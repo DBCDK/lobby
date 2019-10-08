@@ -1,0 +1,6 @@
+echo "### cleaning lobby project ###"
+
+mvn clean
+git pull --ff-only
+docker rm -f lobby-service &>/dev/null || true
+exit 0
