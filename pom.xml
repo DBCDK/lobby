@@ -38,11 +38,18 @@
       <artifactId>hamcrest</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.junit</groupId>
-      <artifactId>junit-bom</artifactId>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
       <version>${junit5.version}</version>
-      <type>pom</type>
-      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>${junit5.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
