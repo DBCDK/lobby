@@ -1,15 +1,15 @@
 Lobby API
 ---------
 
-[Todo Description of newcomer resource]
+[Todo Description of applicant resource]
 
-### Create or replace newcomer
+### Create or replace applicant
 
-Creates newcomer resource with ID specified by the path or completely replaces and existing newcomer.
+Creates applicant resource with ID specified by the path or completely replaces and existing applicant.
 
 * **URL**
 
-  /v1/api/newcomers/{id}
+  /v1/api/applicants/{id}
 
 * **Method**
 
@@ -26,16 +26,16 @@ TBD
 * **Sample Call:**
 
   ```bash
-  $ curl -v -X PUT -H "Content-Type: application/json" http://lobbyhost/v1/api/newcomers/42 -d '{TBD}'
+  $ curl -v -X PUT -H "Content-Type: application/json" http://lobbyhost/v1/api/applicants/42 -d '{TBD}'
   ```
   
-### Change newcomer state
+### Change applicant state
 
-Changes state of newcomer resource with ID specified by the path.
+Changes state of applicant resource with ID specified by the path.
 
 * **URL**
 
-  /v1/api/newcomers/{id}/state
+  /v1/api/applicants/{id}/state
 
 * **Method**
 
@@ -51,26 +51,25 @@ TBD
 * **Sample Call:**
 
   ```bash
-  $ curl -v -X PUT -H "Content-Type: text/plain" http://lobbyhost/v1/api/newcomers/42/state -d '{TBD}'
+  $ curl -v -X PUT -H "Content-Type: text/plain" http://lobbyhost/v1/api/applicants/42/state -d '{TBD}'
   ```
 
 
-### List newcomers
+### List applicants
 
-Returns list of newcomers (not including body content) matched by optional filters.
+Returns list of applicants (not including body content) matched by optional filters.
 
 * **URL**
 
-  /v1/api/newcomers
+  /v1/api/applicants
 
 * **Method**
 
   `GET`
 
 * **Filters**
-  * category - retrieval of a certain kind of newcomer only.
-  * state - retrieval of newcomers with a certain state.
-  * limit - upper bound on the the number of newcomers retrieved.
+  * category - retrieval of a certain kind of applicant only.
+  * state - retrieval of applicants with a certain state.
 
 * **Success Response**
 
@@ -91,17 +90,17 @@ TBD
 * **Sample Call:**
 
   ```bash
-  $ curl -v http://lobbyhost/v1/api/newcomers?limit=2
+  $ curl -v http://lobbyhost/v1/api/applicants?state=PENDING
   ```
 
 
-### Get newcomer content
+### Get applicant content
 
-Returns the BLOB content for the newcomer resource with ID specified by the path.
+Returns the BLOB content for the applicant resource with ID specified by the path.
 
 * **URL**
 
-  /v1/api/newcomers/{id}/body
+  /v1/api/applicants/{id}/body
 
 * **Method**
 
@@ -110,7 +109,7 @@ Returns the BLOB content for the newcomer resource with ID specified by the path
 * **Success Response**
 
   * **Code:** 200 Ok
-  * **Content-type**: Determined by the mime-type of the body content of the newcomer 
+  * **Content-type**: Determined by the mime-type of the body content of the applicant
 
 * **Error Response**  
 TBD
@@ -118,5 +117,5 @@ TBD
 * **Sample Call:**
 
   ```bash
-  $ curl -v http://lobbyhost/v1/api/newcomers/42/body
+  $ curl -v http://lobbyhost/v1/api/applicants/42/body
   ```
