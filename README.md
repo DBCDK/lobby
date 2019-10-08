@@ -1,7 +1,8 @@
 Lobby service
 =============
 
-The purpose of this microservice is to...
+The purpose of this microservice is to provide a means for storing and retrieving applicant
+records before they are accepted into the DBC systems infrastructure.
 
 ### API
 
