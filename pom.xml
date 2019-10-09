@@ -76,7 +76,7 @@
         <executions>
           <execution>
             <id>build-docker-image</id>
-            <phase>package</phase>
+            <phase>pre-integration-test</phase>
             <goals>
               <goal>exec</goal>
             </goals>
