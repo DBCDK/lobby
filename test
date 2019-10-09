@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 echo "### testing lobby project ###"
 
 mvn verify || exit 1
