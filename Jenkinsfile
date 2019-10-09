@@ -49,15 +49,13 @@ pipeline {
 					  failedTotalAll: "0"])
 			}
 		}
-		stage("docker build") {
+		stage("docker push") {
 			when {
                 branch "master"
             }
 			steps {
 				script {
-					def image = docker.build("docker-io.dbc.dk/lobby-service:${env.BRANCH_NAME}-${env.BUILD_NUMBER}",
-						"-f target/docker/Dockerfile --pull --no-cache .")
-					image.push()
+					docker.image("docker-io.dbc.dk/lobby-service:${env.BRANCH_NAME}-${env.BUILD_NUMBER}").push()
 				}
 			}
 		}
