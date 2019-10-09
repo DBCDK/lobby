@@ -17,7 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 class ApplicantEntityTest {
     private final JSONBContext jsonbContext = new JSONBContext();
     private final String expectedJson =
-            "{\"id\":\"42\",\"category\":\"bpf\",\"mimetype\":\"application/xml\",\"state\":\"PENDING\",\"additionalInfo\":{\"localid\":\"bibID\",\"errors\":[\"err1\",\"err2\"]}}";
+            "{\"id\":\"42\",\"category\":\"bpf\",\"mimetype\":\"application/xml\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\",\"additionalInfo\":{\"localid\":\"bibID\",\"errors\":[\"err1\",\"err2\"]}}";
 
     @Test
     void jsonMarshalling() throws JSONBException {
