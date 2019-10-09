@@ -6,7 +6,11 @@
 package dk.dbc.lobby.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonRawValue;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import dk.dbc.jsonb.JSONBContext;
+import dk.dbc.jsonb.JSONBException;
 import dk.dbc.jsonb.JsonConverter;
 
 import javax.persistence.Basic;
@@ -24,11 +28,14 @@ import java.util.Date;
 
 @Entity
 @Table(name = "applicant")
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApplicantEntity {
     // TODO: 08/10/2019 move State enum to standalone api module
     public enum State {
         ACCEPTED, PENDING,
     }
+
+    private static final JSONBContext JSONB_CONTEXT = new JSONBContext();
 
     @Id
     private String id;
@@ -50,10 +57,10 @@ public class ApplicantEntity {
     @Basic(fetch = FetchType.LAZY)
     private byte[] body;
 
-    @JsonRawValue
+    @JsonProperty
     @Column(columnDefinition = "jsonb")
     @Convert(converter = JsonConverter.class)
-    private String additionalInfo;
+    private JsonNode additionalInfo;
 
     @PrePersist
     @PreUpdate
@@ -117,12 +124,17 @@ public class ApplicantEntity {
         this.body = body;
     }
 
-    public String getAdditionalInfo() {
+    public JsonNode getAdditionalInfo() {
         return additionalInfo;
     }
 
-    public void setAdditionalInfo(String additionalInfo) {
+    public void setAdditionalInfo(JsonNode additionalInfo) {
         this.additionalInfo = additionalInfo;
+    }
+
+    @JsonIgnore
+    public void setAdditionalInfo(String additionalInfo) throws JSONBException {
+        setAdditionalInfo(JSONB_CONTEXT.getJsonTree(additionalInfo));
     }
 
     @Override
