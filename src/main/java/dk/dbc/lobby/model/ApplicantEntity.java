@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import dk.dbc.jsonb.JSONBContext;
 import dk.dbc.jsonb.JSONBException;
-import dk.dbc.jsonb.JsonConverter;
+import dk.dbc.jsonb.JsonNodeConverter;
 
 import javax.persistence.Basic;
 import javax.persistence.Column;
@@ -52,14 +52,13 @@ public class ApplicantEntity {
 
     private Timestamp timeOfLastModification;
 
-    @JsonIgnore
     @Lob
     @Basic(fetch = FetchType.LAZY)
     private byte[] body;
 
     @JsonProperty
     @Column(columnDefinition = "jsonb")
-    @Convert(converter = JsonConverter.class)
+    @Convert(converter = JsonNodeConverter.class)
     private JsonNode additionalInfo;
 
     @PrePersist
