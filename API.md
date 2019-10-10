@@ -79,13 +79,18 @@ Changes state of applicant resource with ID specified by the path.
 
   * **Code:** 200 Ok
 
-* **Error Response**  
-TBD
+* **Error Response**
+
+  * **Code:** 410 Gone
+    * When an applicant with ID given by path can not be found.
+  * **Code:** 422 Unprocessable Entity
+    * When the syntax of the request entity is correct, but the
+      server was unable to process the entity due to invalid data.
 
 * **Sample Call:**
 
   ```bash
-  $ curl -v -X PUT -H "Content-Type: text/plain" http://lobbyhost/v1/api/applicants/42/state -d '{TBD}'
+  $ curl -v -X PUT -H "Content-Type: text/plain" http://lobbyhost/v1/api/applicants/42/state -d 'ACCEPTED'
   ```
 
 
