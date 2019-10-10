@@ -30,6 +30,8 @@ import java.util.Date;
 @Table(name = "applicant")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApplicantEntity {
+    public static final String GET_APPLICANTS_QUERY = "SELECT applicant FROM ApplicantEntity applicant";
+
     // TODO: 08/10/2019 move State enum to standalone api module
     public enum State {
         ACCEPTED, PENDING,
