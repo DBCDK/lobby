@@ -5,26 +5,35 @@
 
 package dk.dbc.lobby.rest;
 
-import dk.dbc.commons.jpa.ResultSet;
+import com.fasterxml.jackson.core.JsonEncoding;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.dbc.lobby.model.ApplicantEntity;
+import dk.dbc.lobby.model.ApplicantStateConverter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
-import javax.persistence.Query;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import java.util.List;
 
 @Stateless
 @Path("/v1/api/applicants")
 public class ApplicantsResource {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApplicantsResource.class);
+
     @PersistenceContext(unitName = "lobbyPU")
     private EntityManager entityManager;
 
@@ -90,14 +99,53 @@ public class ApplicantsResource {
         return Response.ok().build();
     }
 
+    /**
+     * Returns list of applicants (not including body content) matched by optional filters
+     * @param category category filter
+     * @param stateStr state filter
+     * @return a HTTP 200 Ok response streaming applicants as JSON array,
+     *         a HTTP 422 Unprocessable Entity response when the state parameter can not
+     *                    be converted into a legal state value.
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getApplicants() {
-        final Query query = entityManager.createQuery(ApplicantEntity.GET_APPLICANTS_QUERY);
-        final ResultSet<ApplicantEntity> resultSet =
-                new ResultSet<>(entityManager, query, new ApplicantEntityMapping());
-        final ApplicantsStreamingOutput applicantsStreamingOutput =
-                new ApplicantsStreamingOutput(resultSet);
+    public Response getApplicants(
+            @QueryParam("category") String category,
+            @QueryParam("state") String stateStr) {
+
+        Object state = null;
+        try {
+            if (stateStr != null) {
+                state = new ApplicantStateConverter().convertToDatabaseColumn(
+                        ApplicantEntity.State.valueOf(stateStr));
+            }
+        } catch (IllegalArgumentException e) {
+            return Response.status(422).entity("Illegal state value " + stateStr).build();
+        }
+
+        final QueryBuilder queryBuilder = new QueryBuilder(ApplicantEntity.GET_APPLICANTS_QUERY)
+                .and("a.category", category)
+                .and("a.state", state);
+        LOGGER.debug("GET /applicants query {}", queryBuilder.toString());
+
+        final List resultSet = queryBuilder.build(entityManager, ApplicantEntity.WITHOUT_BODY)
+                .getResultList();
+
+        final StreamingOutput applicantsStreamingOutput = outputStream -> {
+            final JsonGenerator generator = new ObjectMapper().getFactory()
+                    .createGenerator(outputStream, JsonEncoding.UTF8);
+            try {
+                generator.writeStartArray();
+                for (Object applicantEntity : resultSet) {
+                    generator.writeObject(applicantEntity);
+                }
+                generator.writeEndArray();
+            } finally {
+                generator.flush();
+                generator.close();
+            }
+        };
+
         return Response.ok().entity(applicantsStreamingOutput).build();
     }
 }
