@@ -10,7 +10,7 @@
              version="2.1">
   <persistence-unit name="lobbyPU" transaction-type="JTA">
     <jta-data-source>jdbc/lobby</jta-data-source>
-    <class>dk.dbc.jsonb.JsonConverter</class>
+    <class>dk.dbc.jsonb.JsonNodeConverter</class>
     <class>dk.dbc.lobby.model.ApplicantStateConverter</class>
     <class>dk.dbc.lobby.model.ApplicantEntity</class>
     <properties>
@@ -18,7 +18,7 @@
     </properties>
   </persistence-unit>
   <persistence-unit name="lobbyIT" transaction-type="RESOURCE_LOCAL">
-    <class>dk.dbc.jsonb.JsonConverter</class>
+    <class>dk.dbc.jsonb.JsonNodeConverter</class>
     <class>dk.dbc.lobby.model.ApplicantStateConverter</class>
     <class>dk.dbc.lobby.model.ApplicantEntity</class>
     <properties>
