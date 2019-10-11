@@ -5,10 +5,12 @@
 
 package dk.dbc.lobby.rest;
 
+import dk.dbc.httpclient.HttpGet;
 import dk.dbc.httpclient.HttpPut;
 import dk.dbc.httpclient.PathBuilder;
 import org.junit.jupiter.api.Test;
 
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -114,6 +116,39 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                 is(200));
         assertThat("state updated", getApplicantById(id).get("state"),
                 is("ACCEPTED"));
+    }
+
+    @Test
+    void getApplicantBody_applicantNotFound() {
+        final HttpGet httpGet = new HttpGet(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withPathElements(new PathBuilder("/v1/api/applicants/{id}/body")
+                        .bind("id", "unknown")
+                        .build());
+
+        final Response response = httpClient.execute(httpGet);
+        assertThat(response.getStatus(), is(410));
+    }
+
+    @Test
+    void getApplicantBody() {
+        final String id = "getApplicantBody";
+        createOrReplaceApplicant(id,
+                "{\"id\":\"getApplicantBody\",\"category\":\"changeApplicantState\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
+
+        final HttpGet httpGet = new HttpGet(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withPathElements(new PathBuilder("/v1/api/applicants/{id}/body")
+                        .bind("id", id)
+                        .build());
+
+        final Response response = httpClient.execute(httpGet);
+        assertThat("response status", response.getStatus(),
+                is(200));
+        assertThat("response mimetype", response.getMediaType().toString(),
+                is(MediaType.TEXT_PLAIN));
+        assertThat("applicant body", response.readEntity(String.class),
+                is("hello world"));
     }
     
     static Response createOrReplaceApplicant(String id, String json) {
