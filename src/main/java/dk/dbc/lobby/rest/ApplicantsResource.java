@@ -59,4 +59,30 @@ public class ApplicantsResource {
             return Response.status(422).entity(e.getMessage()).build();
         }
     }
+
+    /**
+     * Changes state of applicant resource with ID specified by the path
+     * @param id applicant ID
+     * @param stateStr new applicant state, must be from the set {ACCEPTED, PENDING}
+     * @return a HTTP 200 Ok response when applicant has its state replaced,
+     *         a HTTP 410 Gone response when an applicant with the given ID can not be found,
+     *         a HTTP 422 Unprocessable Entity response when the request entity can not
+     *                    be converted into a legal state value.
+     */
+    @PUT
+    @Path("/{id}/state")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public Response changeApplicantState(@PathParam("id") String id, String stateStr) {
+        final ApplicantEntity applicantEntity = entityManager.find(ApplicantEntity.class, id);
+        if (applicantEntity == null) {
+            return Response.status(410).entity("Applicant not found").build();
+        }
+        try {
+            final ApplicantEntity.State state = ApplicantEntity.State.valueOf(stateStr);
+            applicantEntity.setState(state);
+        } catch (IllegalArgumentException e) {
+            return Response.status(422).entity("Illegal state value " + stateStr).build();
+        }
+        return Response.ok().build();
+    }
 }
