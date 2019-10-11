@@ -6,6 +6,7 @@
 package dk.dbc.lobby.rest;
 
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
+import dk.dbc.httpclient.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.Testcontainers;
@@ -15,6 +16,9 @@ import org.testcontainers.containers.wait.strategy.Wait;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.time.Duration;
 
 public abstract class AbstractLobbyServiceContainerTest {
@@ -28,6 +32,7 @@ public abstract class AbstractLobbyServiceContainerTest {
 
     static final GenericContainer lobbyServiceContainer;
     static final String lobbyServiceBaseUrl;
+    static final HttpClient httpClient;
 
     static {
         lobbyServiceContainer = new GenericContainer("docker-io.dbc.dk/lobby-service:devel")
@@ -42,6 +47,7 @@ public abstract class AbstractLobbyServiceContainerTest {
         lobbyServiceContainer.start();
         lobbyServiceBaseUrl = "http://" + lobbyServiceContainer.getContainerIpAddress() +
                 ":" + lobbyServiceContainer.getMappedPort(8080);
+        httpClient = HttpClient.create(HttpClient.newClient());
     }
 
     private static EmbeddedPostgres pgStart() {
@@ -49,6 +55,18 @@ public abstract class AbstractLobbyServiceContainerTest {
             return EmbeddedPostgres.start();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        }
+    }
+
+    static Connection connectToLobbyDB() {
+        try {
+            Class.forName("org.postgresql.Driver");
+            final String dbUrl = String.format("jdbc:postgresql://localhost:%s/postgres", pg.getPort());
+            final Connection connection = DriverManager.getConnection(dbUrl, "postgres", "");
+            connection.setAutoCommit(true);
+            return connection;
+        } catch (ClassNotFoundException | SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 }
