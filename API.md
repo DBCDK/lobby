@@ -146,7 +146,9 @@ Returns the BLOB content for the applicant resource with ID specified by the pat
   * **Content-type**: Determined by the mime-type of the body content of the applicant
 
 * **Error Response**  
-TBD
+
+  * **Code:** 410 Gone
+    * When an applicant with ID given by path can not be found.
 
 * **Sample Call:**
 

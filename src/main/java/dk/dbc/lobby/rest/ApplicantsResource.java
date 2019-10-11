@@ -148,4 +148,22 @@ public class ApplicantsResource {
 
         return Response.ok().entity(applicantsStreamingOutput).build();
     }
+
+    /**
+     * Returns the BLOB content for the applicant resource with ID specified by the path.
+     * @param id applicant ID
+     * @return a HTTP 200 Ok response streaming applicant body,
+     *         a HTTP 410 Gone response when an applicant with the given ID can not be found.
+     */
+    @GET
+    @Path("/{id}/body")
+    public Response getApplicantBody(@PathParam("id") String id) {
+        final ApplicantEntity applicantEntity = entityManager.find(ApplicantEntity.class, id);
+        if (applicantEntity == null) {
+            return Response.status(410).entity("Applicant not found").build();
+        }
+
+        final StreamingOutput streamingOutput = outputStream -> outputStream.write(applicantEntity.getBody());
+        return Response.ok().type(applicantEntity.getMimetype()).entity(streamingOutput).build();
+    }
 }
