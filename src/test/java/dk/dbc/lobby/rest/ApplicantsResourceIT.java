@@ -19,7 +19,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.HashMap;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
@@ -149,6 +151,64 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                 is(MediaType.TEXT_PLAIN));
         assertThat("applicant body", response.readEntity(String.class),
                 is("hello world"));
+    }
+
+    @Test
+    void getApplicants_invalidStateFilter() {
+        final HttpGet httpGet = new HttpGet(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withQueryParameter("state", "NOT_A_KNOWN_STATE")
+                .withPathElements(new PathBuilder("/v1/api/applicants").build());
+
+        final Response response = httpClient.execute(httpGet);
+        assertThat(response.getStatus(), is(422));
+    }
+
+    @Test
+    void getApplicants_emptyResult() {
+        final HttpGet httpGet = new HttpGet(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withQueryParameter("category", "NOT_A_KNOWN_CATEGORY")
+                .withQueryParameter("state", "PENDING")
+                .withPathElements(new PathBuilder("/v1/api/applicants").build());
+
+        final Response response = httpClient.execute(httpGet);
+        assertThat("response state", response.getStatus(),
+                is(200));
+        assertThat("response content", response.readEntity(String.class),
+                is("[]"));
+    }
+
+    @Test
+    void getApplicants() {
+        final String id1 = "getApplicants-1";
+        createOrReplaceApplicant(id1,
+                "{\"id\":\"getApplicants-1\",\"category\":\"getApplicants\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
+        final String id2 = "getApplicants-2";
+        createOrReplaceApplicant(id2,
+                "{\"id\":\"getApplicants-2\",\"category\":\"getApplicants\",\"mimetype\":\"text/plain\",\"state\":\"ACCEPTED\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
+        final String id3 = "getApplicants-3";
+        createOrReplaceApplicant(id3,
+                "{\"id\":\"getApplicants-3\",\"category\":\"getApplicants\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
+
+        final HttpGet httpGet = new HttpGet(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withQueryParameter("category", "getApplicants")
+                .withQueryParameter("state", "PENDING")
+                .withPathElements(new PathBuilder("/v1/api/applicants").build());
+
+        final Response response = httpClient.execute(httpGet);
+        assertThat("response state", response.getStatus(),
+                is(200));
+        final String json = response.readEntity(String.class);
+        assertThat("getApplicants-1 in response", json,
+                containsString("\"id\":\"getApplicants-1\""));
+        assertThat("getApplicants-2 not in response", json,
+                not(containsString("\"id\":\"getApplicants-2\"")));
+        assertThat("getApplicants-3 in response", json,
+                containsString("\"id\":\"getApplicants-3\""));
+        assertThat("body is not contained in response", json,
+                not(containsString("\"body\":")));
     }
     
     static Response createOrReplaceApplicant(String id, String json) {

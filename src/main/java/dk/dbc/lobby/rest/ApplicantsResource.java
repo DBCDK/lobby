@@ -14,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
@@ -109,6 +111,7 @@ public class ApplicantsResource {
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public Response getApplicants(
             @QueryParam("category") String category,
             @QueryParam("state") String stateStr) {
@@ -137,6 +140,10 @@ public class ApplicantsResource {
             try {
                 generator.writeStartArray();
                 for (Object applicantEntity : resultSet) {
+                    // Even though the native query does not retrieve the body
+                    // the entitymanager might still choose to serve the entities
+                    // from the cache, where the body might already be fetched.
+                    ((ApplicantEntity) applicantEntity).setBody(null);
                     generator.writeObject(applicantEntity);
                 }
                 generator.writeEndArray();
