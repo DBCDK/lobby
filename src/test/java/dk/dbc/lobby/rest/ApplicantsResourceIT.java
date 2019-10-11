@@ -49,27 +49,81 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
 
     @Test
     void createOrReplaceApplicant() {
-        HttpPut httpPut = new HttpPut(httpClient)
-                .withBaseUrl(lobbyServiceBaseUrl)
-                .withJsonData(
-                        "{\"id\":\"createOrReplaceApplicant\",\"category\":\"createOrReplaceApplicant\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\",\"additionalInfo\":{\"localId\": \"extId\"}}")
-                .withPathElements(new PathBuilder("/v1/api/applicants/{id}")
-                        .bind("id", "createOrReplaceApplicant")
-                        .build());
+        final String id = "createOrReplaceApplicant";
 
-        Response response = httpClient.execute(httpPut);
+        Response response = createOrReplaceApplicant(id,
+                "{\"id\":\"createOrReplaceApplicant\",\"category\":\"createOrReplaceApplicant\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\",\"additionalInfo\":{\"localId\": \"extId\"}}");
         assertThat("create response status", response.getStatus(),
                 is(201));
-        assertThat("row exists", getApplicantById("createOrReplaceApplicant").get("id"),
-                is("createOrReplaceApplicant"));
+        assertThat("row exists", getApplicantById(id).get("id"),
+                is(id));
 
-        httpPut.withJsonData("{\"id\":\"createOrReplaceApplicant\",\"category\":\"createOrReplaceApplicant_replace\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
-        response = httpClient.execute(httpPut);
-
+        response = createOrReplaceApplicant(id,
+                "{\"id\":\"createOrReplaceApplicant\",\"category\":\"createOrReplaceApplicant_replace\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
         assertThat("replace response status", response.getStatus(),
                 is(200));
-        assertThat("row updated", getApplicantById("createOrReplaceApplicant").get("category"),
+        assertThat("row updated", getApplicantById(id).get("category"),
                 is("createOrReplaceApplicant_replace"));
+    }
+
+    @Test
+    void changeApplicantState_applicantNotFound() {
+        final HttpPut httpPut = new HttpPut(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withData("ACCEPTED", "text/plain")
+                .withPathElements(new PathBuilder("/v1/api/applicants/{id}/state")
+                        .bind("id", "unknown")
+                        .build());
+
+        final Response response = httpClient.execute(httpPut);
+        assertThat(response.getStatus(), is(410));
+    }
+
+    @Test
+    void changeApplicantState_invalidState() {
+        final String id = "changeApplicantState_invalidState";
+        createOrReplaceApplicant(id,
+                "{\"id\":\"changeApplicantState_invalidState\",\"category\":\"changeApplicantState\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
+
+        final HttpPut httpPut = new HttpPut(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withData("NOT_A_KNOWN_STATE", "text/plain")
+                .withPathElements(new PathBuilder("/v1/api/applicants/{id}/state")
+                        .bind("id", id)
+                        .build());
+
+        final Response response = httpClient.execute(httpPut);
+        assertThat(response.getStatus(), is(422));
+    }
+
+    @Test
+    void changeApplicantState() {
+        final String id = "changeApplicantState";
+        createOrReplaceApplicant(id,
+                "{\"id\":\"changeApplicantState\",\"category\":\"changeApplicantState\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
+
+        final HttpPut httpPut = new HttpPut(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withData("ACCEPTED", "text/plain")
+                .withPathElements(new PathBuilder("/v1/api/applicants/{id}/state")
+                        .bind("id", id)
+                        .build());
+
+        final Response response = httpClient.execute(httpPut);
+        assertThat("response status", response.getStatus(),
+                is(200));
+        assertThat("state updated", getApplicantById(id).get("state"),
+                is("ACCEPTED"));
+    }
+    
+    static Response createOrReplaceApplicant(String id, String json) {
+        final HttpPut httpPut = new HttpPut(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withJsonData(json)
+                .withPathElements(new PathBuilder("/v1/api/applicants/{id}")
+                        .bind("id", id)
+                        .build());
+        return httpClient.execute(httpPut);
     }
 
     static HashMap<String, Object> getApplicantById(String id) {
