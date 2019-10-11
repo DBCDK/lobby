@@ -114,17 +114,12 @@ Returns list of applicants (not including body content) matched by optional filt
 
   * **Code:** 200 Ok
   * **Content-type**: application/json
-  **Content:**
-    ```json
-    [
-        {
-          TBD
-        }
-    ]
-    ```
  
 * **Error Response**  
-TBD
+
+   * **Code:** 422 Unprocessable Entity
+    * When the syntax of the request entity is correct, but the
+      server was unable to process the entity due to invalid data.
 
 * **Sample Call:**
 

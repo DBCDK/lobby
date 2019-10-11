@@ -17,11 +17,15 @@ import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
+import javax.persistence.EntityResult;
 import javax.persistence.FetchType;
+import javax.persistence.FieldResult;
 import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
+import javax.persistence.SqlResultSetMapping;
+import javax.persistence.SqlResultSetMappings;
 import javax.persistence.Table;
 import java.sql.Timestamp;
 import java.util.Date;
@@ -29,7 +33,25 @@ import java.util.Date;
 @Entity
 @Table(name = "applicant")
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@SqlResultSetMappings({
+        @SqlResultSetMapping(
+                name = ApplicantEntity.WITHOUT_BODY,
+                entities = @EntityResult(
+                        entityClass = ApplicantEntity.class,
+                        fields = {
+                                @FieldResult(name = "id", column = "id"),
+                                @FieldResult(name = "category", column = "category"),
+                                @FieldResult(name = "mimetype", column = "mimetype"),
+                                @FieldResult(name = "state", column = "state"),
+                                @FieldResult(name = "timeOfCreation", column = "timeOfCreation"),
+                                @FieldResult(name = "timeOfLastModification", column = "timeOfLastModification"),
+                                @FieldResult(name = "additionalInfo", column = "additionalInfo")}))
+})
 public class ApplicantEntity {
+    public static final String GET_APPLICANTS_QUERY =
+            "SELECT a.id, a.category, a.mimetype, a.state, a.timeOfCreation, a.timeOfLastModification, a.additionalInfo FROM applicant a";
+    public static final String WITHOUT_BODY = "ApplicantEntityEntityWithoutBody";
+
     // TODO: 08/10/2019 move State enum to standalone api module
     public enum State {
         ACCEPTED, PENDING,
