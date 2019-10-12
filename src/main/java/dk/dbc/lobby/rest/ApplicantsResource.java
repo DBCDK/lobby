@@ -9,21 +9,17 @@ import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.dbc.lobby.model.ApplicantEntity;
-import dk.dbc.lobby.model.ApplicantStateConverter;
-import java.util.HashMap;
-import java.util.Map;
-import javax.persistence.TypedQuery;
-import javax.ws.rs.DELETE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
+import javax.persistence.TypedQuery;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -33,7 +29,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Stateless
 @Path("/v1/api/applicants")
@@ -163,20 +161,18 @@ public class ApplicantsResource {
         Object state = null;
         try {
             if (stateStr != null) {
-                state = new ApplicantStateConverter().convertToDatabaseColumn(
-                        ApplicantEntity.State.valueOf(stateStr));
+                state = ApplicantEntity.State.valueOf(stateStr);
             }
         } catch (IllegalArgumentException e) {
             return Response.status(422).entity("Illegal state value " + stateStr).build();
         }
 
         final QueryBuilder queryBuilder = new QueryBuilder(ApplicantEntity.GET_APPLICANTS_QUERY)
-                .and("a.category", category)
-                .and("a.state", state);
+                .and("applicant.category", category)
+                .and("applicant.state", state);
         LOGGER.debug("GET /applicants query {}", queryBuilder.toString());
 
-        final List resultSet = queryBuilder.build(entityManager, ApplicantEntity.WITHOUT_BODY)
-                .getResultList();
+        final List resultSet = queryBuilder.build(entityManager).getResultList();
 
         final StreamingOutput applicantsStreamingOutput = outputStream -> {
             final JsonGenerator generator = new ObjectMapper().getFactory()
@@ -184,9 +180,6 @@ public class ApplicantsResource {
             try {
                 generator.writeStartArray();
                 for (Object applicantEntity : resultSet) {
-                    // Even though the native query does not retrieve the body
-                    // the entitymanager might still choose to serve the entities
-                    // from the cache, where the body might already be fetched.
                     ((ApplicantEntity) applicantEntity).setBody(null);
                     generator.writeObject(applicantEntity);
                 }
