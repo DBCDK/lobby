@@ -8,7 +8,7 @@ records before they are accepted into the DBC systems infrastructure.
 
 **Environment variables**
 
-* LOBBY_DB database URL (USER:PASSWORD@HOST:PORT/DBNAME) of the underlying lobby store.
+* LOBBY_DB_URL database URL (USER:PASSWORD@HOST:PORT/DBNAME) of the underlying lobby store.
 
 ### API
 

@@ -6,7 +6,7 @@
 echo "### Starting lobby service docker ###"
 
 lobby_service_port=${LOBBY_SERVICE_PORT:-8080}
-docker run --rm --name lobby-service -d -e JAVA_MAX_HEAP_SIZE=2G -e LOBBY_DB=${LOBBY_DB} -p ${lobby_service_port}:8080 docker-io.dbc.dk/lobby-service:devel
+docker run --rm --name lobby-service -d -e JAVA_MAX_HEAP_SIZE=2G -e LOBBY_DB_URL=${LOBBY_DB_URL} -p ${lobby_service_port}:8080 docker-io.dbc.dk/lobby-service:devel
 
 attempts=0
 max_attempts=60

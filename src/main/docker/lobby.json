@@ -2,7 +2,7 @@
   "appName": "lobby",
   "jdbc": {
     "jdbc/lobby": {
-      "url": "${LOBBY_DB}"
+      "url": "${LOBBY_DB_URL}"
     }
   }
 }
