@@ -104,7 +104,7 @@ public class ApplicantsResource {
     @DELETE
     public Response clean() {
         final Map<ApplicantEntity.State, String> purgeRules = new HashMap<ApplicantEntity.State, String>() {{
-            put(ApplicantEntity.State.ACCEPTED, "6 months");
+            put(ApplicantEntity.State.ACCEPTED, "4 weeks");
         }};
         try {
             purgeRules.forEach((state,age) -> {
