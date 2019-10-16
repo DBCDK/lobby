@@ -22,6 +22,8 @@ import javax.persistence.FetchType;
 import javax.persistence.FieldResult;
 import javax.persistence.Id;
 import javax.persistence.Lob;
+import javax.persistence.NamedNativeQueries;
+import javax.persistence.NamedNativeQuery;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SqlResultSetMapping;
@@ -29,6 +31,12 @@ import javax.persistence.SqlResultSetMappings;
 import javax.persistence.Table;
 import java.sql.Timestamp;
 import java.util.Date;
+
+@NamedNativeQueries({
+        @NamedNativeQuery(
+            name = ApplicantEntity.GET_OUTDATED_APPLICANTS,
+            query = "SELECT id FROM applicant where state=CAST (? AS applicant_state) and timeOfLastModification<now()-CAST (? AS INTERVAL)",
+            resultClass = ApplicantEntity.class)})
 
 @Entity
 @Table(name = "applicant")
@@ -51,7 +59,7 @@ public class ApplicantEntity {
     public static final String GET_APPLICANTS_QUERY =
             "SELECT a.id, a.category, a.mimetype, a.state, a.timeOfCreation, a.timeOfLastModification, a.additionalInfo FROM applicant a";
     public static final String WITHOUT_BODY = "ApplicantEntityEntityWithoutBody";
-
+    public static final String GET_OUTDATED_APPLICANTS = "getOutdatedApplicants";
     // TODO: 08/10/2019 move State enum to standalone api module
     public enum State {
         ACCEPTED, PENDING,
