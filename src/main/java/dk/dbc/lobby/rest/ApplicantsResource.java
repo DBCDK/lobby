@@ -10,6 +10,10 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.dbc.lobby.model.ApplicantEntity;
 import dk.dbc.lobby.model.ApplicantStateConverter;
+import java.util.HashMap;
+import java.util.Map;
+import javax.persistence.TypedQuery;
+import javax.ws.rs.DELETE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,6 +77,46 @@ public class ApplicantsResource {
         } catch (PersistenceException e) {
             return Response.status(422).entity(e.getMessage()).build();
         }
+    }
+
+    private void purgeApplicantsByStateAndAge(ApplicantEntity.State state, String age) {
+        LOGGER.info("Purge {} aged {}.", state.toString(), age);
+        final TypedQuery<ApplicantEntity> query = entityManager
+                .createNamedQuery(ApplicantEntity.GET_OUTDATED_APPLICANTS,
+                        ApplicantEntity.class)
+                .setParameter(1, state.toString())
+                .setParameter(2, age);
+        final List<ApplicantEntity> applicantEntityList = query.getResultList();
+        applicantEntityList.forEach(ael -> entityManager.remove(ael));
+        LOGGER.info("Succesfully deleted {} files.", applicantEntityList.size());
+    }
+
+    /**
+     * Performs a clean operation on lobby database
+     *
+     * Specific behavior depends on state.
+     * Types:
+     *      - ACCEPTED : Cleaned after 6 months
+     *
+     * @return a HTTP 200 OK response
+     *         a HTTP 500 INTERNAL_SERVER_ERROR response in case of general error.
+     */
+    @DELETE
+    public Response clean() {
+        final Map<ApplicantEntity.State, String> purgeRules = new HashMap<ApplicantEntity.State, String>() {{
+            put(ApplicantEntity.State.ACCEPTED, "4 weeks");
+        }};
+        try {
+            purgeRules.forEach((state,age) -> {
+                LOGGER.info("Deleting applicants with {} older than {}", state, age);
+                purgeApplicantsByStateAndAge(state, age);
+            });
+        }
+        catch (Exception e) {
+            LOGGER.error("Deleting failed:{}", e.toString());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+        return Response.ok().build();
     }
 
     /**

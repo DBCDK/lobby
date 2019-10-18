@@ -8,6 +8,9 @@ pipeline {
 		// refers to the name set in manage jenkins -> global tool configuration
 		maven "Maven 3"
 	}
+	environment {
+		GITLAB_PRIVATE_TOKEN = credentials("metascrum-gitlab-api-token")
+	}
 	triggers {
 		pollSCM("H/03 * * * *")
 		upstream(upstreamProjects: "Docker-payara5-bump-trigger",
@@ -57,6 +60,25 @@ pipeline {
 			steps {
 				script {
 					docker.image("docker-io.dbc.dk/lobby-service:${env.BRANCH_NAME}-${env.BUILD_NUMBER}").push()
+				}
+			}
+		}
+		stage("bump docker tag in lobby-secrets") {
+			agent {
+				docker {
+					label workerNode
+					image "docker.dbc.dk/build-env:latest"
+					alwaysPull true
+				}
+			}
+			when {
+				branch "master"
+			}
+			steps {
+				script {
+					sh """  
+                        set-new-version services/lobby.yml ${env.GITLAB_PRIVATE_TOKEN} metascrum/lobby-secrets  ${env.BRANCH_NAME}-${env.BUILD_NUMBER} -b staging
+                    """
 				}
 			}
 		}

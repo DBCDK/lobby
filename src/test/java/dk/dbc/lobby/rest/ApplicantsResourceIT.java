@@ -5,6 +5,7 @@
 
 package dk.dbc.lobby.rest;
 
+import dk.dbc.httpclient.HttpDelete;
 import dk.dbc.httpclient.HttpGet;
 import dk.dbc.httpclient.HttpPut;
 import dk.dbc.httpclient.PathBuilder;
@@ -210,6 +211,42 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
         assertThat("body is not contained in response", json,
                 not(containsString("\"body\":")));
     }
+
+
+
+    @Test
+    void deleteOutdatedApplicants() {
+        // Given: Three applicants. One is recent, and accepted. One is accepted and 200 days old.
+        //      One is PENDING and 200 days old.
+        final String id1 = "getApplicants-1";
+        createOrReplaceApplicant(id1,
+                "{\"id\":\"getApplicants-1\",\"category\":\"getApplicants\",\"mimetype\":\"text/plain\",\"state\":\"ACCEPTED\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
+        final String id2 = "getApplicants-2";
+        createOrReplaceApplicant(id2,
+                "{\"id\":\"getApplicants-2\",\"category\":\"getApplicants\",\"mimetype\":\"text/plain\",\"state\":\"ACCEPTED\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
+        final String id3 = "getApplicants-3";
+        createOrReplaceApplicant(id3,
+                "{\"id\":\"getApplicants-3\",\"category\":\"getApplicants\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
+        final String id4 = "getApplicants-4";
+        createOrReplaceApplicant(id4,
+                "{\"id\":\"getApplicants-4\",\"category\":\"getApplicants\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
+
+        outdateThisApplicant(id2);
+        outdateThisApplicant(id3);
+        outdateThisApplicant(id4);
+
+        // When a "clean" lobby is performed
+        final HttpDelete httpDelete= new HttpDelete(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withPathElements(new PathBuilder("/v1/api/applicants").build());
+        httpClient.execute(httpDelete);
+
+        // Then only the one accepted and 200 days old are deleted
+        assertThat("The one with status pending is still there", getApplicantWithThisId(id3).getStatus(), is(200));
+        assertThat("The one with status accepted, and is recent is still there", getApplicantWithThisId(id1).getStatus(), is(200));
+        assertThat("The one with status pending, but 200 days old, is still there", getApplicantWithThisId(id4).getStatus(), is(200));
+        assertThat("The one with status accepted, but 200 days old, is no longer there", getApplicantWithThisId(id2).getStatus(), is(410));
+    }
     
     static Response createOrReplaceApplicant(String id, String json) {
         final HttpPut httpPut = new HttpPut(httpClient)
@@ -219,6 +256,36 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                         .bind("id", id)
                         .build());
         return httpClient.execute(httpPut);
+    }
+
+    static void outdateThisApplicant(String id) {
+        try (Connection connection = connectToLobbyDB()) {
+            PreparedStatement preparedStatement = null;
+            try {
+                final String updateSQL = "UPDATE applicant SET timeOfLastModification=now()-CAST ('200 days' AS INTERVAL) WHERE id=?";
+                preparedStatement = connection.prepareStatement(updateSQL);
+                preparedStatement.setString(1,id);
+                preparedStatement.executeUpdate();
+            } finally {
+                if (preparedStatement != null){
+                    preparedStatement.close();
+                }
+            }
+
+        }
+        catch (SQLException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    static Response getApplicantWithThisId(String id){
+        final HttpGet httpGet = new HttpGet(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withPathElements(new PathBuilder("/v1/api/applicants/{id}/body")
+                        .bind("id", id)
+                        .build());
+
+        return  httpClient.execute(httpGet);
     }
 
     static HashMap<String, Object> getApplicantById(String id) {
