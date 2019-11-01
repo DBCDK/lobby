@@ -12,19 +12,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import dk.dbc.jsonb.JSONBContext;
 import dk.dbc.jsonb.JSONBException;
 import dk.dbc.jsonb.JsonNodeConverter;
-
-import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.Id;
-import javax.persistence.Lob;
 import javax.persistence.NamedNativeQueries;
 import javax.persistence.NamedNativeQuery;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.sql.Timestamp;
 import java.util.Date;
 
@@ -63,8 +60,7 @@ public class ApplicantEntity {
 
     private Timestamp timeOfLastModification;
 
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
+    @Transient
     private byte[] body;
 
     @JsonProperty

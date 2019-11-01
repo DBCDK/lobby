@@ -8,6 +8,7 @@ package dk.dbc.lobby.rest;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dk.dbc.lobby.model.ApplicantBodyEntity;
 import dk.dbc.lobby.model.ApplicantEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +59,9 @@ public class ApplicantsResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createOrReplaceApplicant(@PathParam("id") String id, ApplicantEntity applicantEntity) {
         try {
+            final byte[] body = applicantEntity.getBody();
+            applicantEntity.setBody(null);
+
             // ensure ID from path matches ID in entity
             applicantEntity.setId(id);
             
@@ -69,8 +73,19 @@ public class ApplicantsResource {
                 entityManager.merge(applicantEntity);
                 status = 200;
             }
-            // force database errors to be caught before implicit commit on method exit
             entityManager.flush();
+
+            ApplicantBodyEntity applicantBodyEntity = entityManager.find(ApplicantBodyEntity.class, id);
+            if (applicantBodyEntity == null) {
+                applicantBodyEntity = new ApplicantBodyEntity();
+                applicantBodyEntity.setId(id);
+                applicantBodyEntity.setBody(body);
+                entityManager.persist(applicantBodyEntity);
+            } else {
+                applicantBodyEntity.setBody(body);
+            }
+            entityManager.flush();
+
             return Response.status(status).build();
         } catch (PersistenceException e) {
             return Response.status(422).entity(e.getMessage()).build();
@@ -180,7 +195,6 @@ public class ApplicantsResource {
             try {
                 generator.writeStartArray();
                 for (Object applicantEntity : resultSet) {
-                    ((ApplicantEntity) applicantEntity).setBody(null);
                     generator.writeObject(applicantEntity);
                 }
                 generator.writeEndArray();
@@ -206,8 +220,12 @@ public class ApplicantsResource {
         if (applicantEntity == null) {
             return Response.status(410).entity("Applicant not found").build();
         }
+        final ApplicantBodyEntity applicantBodyEntity = entityManager.find(ApplicantBodyEntity.class, id);
+        if (applicantBodyEntity == null) {
+            return Response.status(410).entity("Applicant body not found").build();
+        }
 
-        final StreamingOutput streamingOutput = outputStream -> outputStream.write(applicantEntity.getBody());
+        final StreamingOutput streamingOutput = outputStream -> outputStream.write(applicantBodyEntity.getBody());
         return Response.ok().type(applicantEntity.getMimetype()).entity(streamingOutput).build();
     }
 }
