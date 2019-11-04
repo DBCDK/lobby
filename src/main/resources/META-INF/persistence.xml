@@ -13,18 +13,9 @@
     <class>dk.dbc.jsonb.JsonNodeConverter</class>
     <class>dk.dbc.lobby.model.ApplicantStateConverter</class>
     <class>dk.dbc.lobby.model.ApplicantEntity</class>
+    <class>dk.dbc.lobby.model.ApplicantBodyEntity</class>
     <properties>
       <property name="javax.persistence.schema-generation.database.action" value="none"/>
-    </properties>
-  </persistence-unit>
-  <persistence-unit name="lobbyIT" transaction-type="RESOURCE_LOCAL">
-    <class>dk.dbc.jsonb.JsonNodeConverter</class>
-    <class>dk.dbc.lobby.model.ApplicantStateConverter</class>
-    <class>dk.dbc.lobby.model.ApplicantEntity</class>
-    <properties>
-      <property name="javax.persistence.schema-generation.database.action" value="none"/>
-      <property name="eclipselink.logging.logger" value="org.eclipse.persistence.logging.DefaultSessionLog"/>
-      <property name="eclipselink.logging.level" value="FINE"/>
     </properties>
   </persistence-unit>
 </persistence>

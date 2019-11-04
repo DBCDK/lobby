@@ -40,8 +40,8 @@ class QueryBuilder {
         return this;
     }
 
-    Query build(EntityManager entityManager, String resultMapping) {
-        final Query query = entityManager.createNativeQuery(toString(), resultMapping);
+    Query build(EntityManager entityManager) {
+        final Query query = entityManager.createQuery(toString());
         for (int i = 0; i < values.size(); i++) {
             query.setParameter(i+1, values.get(i));
         }

@@ -8,22 +8,19 @@ package dk.dbc.lobby.rest;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dk.dbc.lobby.model.ApplicantBodyEntity;
 import dk.dbc.lobby.model.ApplicantEntity;
-import dk.dbc.lobby.model.ApplicantStateConverter;
-import java.util.HashMap;
-import java.util.Map;
-import javax.persistence.TypedQuery;
-import javax.ws.rs.DELETE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
+import javax.persistence.TypedQuery;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -33,7 +30,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Stateless
 @Path("/v1/api/applicants")
@@ -60,6 +59,9 @@ public class ApplicantsResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createOrReplaceApplicant(@PathParam("id") String id, ApplicantEntity applicantEntity) {
         try {
+            final byte[] body = applicantEntity.getBody();
+            applicantEntity.setBody(null);
+
             // ensure ID from path matches ID in entity
             applicantEntity.setId(id);
             
@@ -71,8 +73,19 @@ public class ApplicantsResource {
                 entityManager.merge(applicantEntity);
                 status = 200;
             }
-            // force database errors to be caught before implicit commit on method exit
             entityManager.flush();
+
+            ApplicantBodyEntity applicantBodyEntity = entityManager.find(ApplicantBodyEntity.class, id);
+            if (applicantBodyEntity == null) {
+                applicantBodyEntity = new ApplicantBodyEntity();
+                applicantBodyEntity.setId(id);
+                applicantBodyEntity.setBody(body);
+                entityManager.persist(applicantBodyEntity);
+            } else {
+                applicantBodyEntity.setBody(body);
+            }
+            entityManager.flush();
+
             return Response.status(status).build();
         } catch (PersistenceException e) {
             return Response.status(422).entity(e.getMessage()).build();
@@ -163,20 +176,18 @@ public class ApplicantsResource {
         Object state = null;
         try {
             if (stateStr != null) {
-                state = new ApplicantStateConverter().convertToDatabaseColumn(
-                        ApplicantEntity.State.valueOf(stateStr));
+                state = ApplicantEntity.State.valueOf(stateStr);
             }
         } catch (IllegalArgumentException e) {
             return Response.status(422).entity("Illegal state value " + stateStr).build();
         }
 
         final QueryBuilder queryBuilder = new QueryBuilder(ApplicantEntity.GET_APPLICANTS_QUERY)
-                .and("a.category", category)
-                .and("a.state", state);
+                .and("applicant.category", category)
+                .and("applicant.state", state);
         LOGGER.debug("GET /applicants query {}", queryBuilder.toString());
 
-        final List resultSet = queryBuilder.build(entityManager, ApplicantEntity.WITHOUT_BODY)
-                .getResultList();
+        final List resultSet = queryBuilder.build(entityManager).getResultList();
 
         final StreamingOutput applicantsStreamingOutput = outputStream -> {
             final JsonGenerator generator = new ObjectMapper().getFactory()
@@ -184,10 +195,6 @@ public class ApplicantsResource {
             try {
                 generator.writeStartArray();
                 for (Object applicantEntity : resultSet) {
-                    // Even though the native query does not retrieve the body
-                    // the entitymanager might still choose to serve the entities
-                    // from the cache, where the body might already be fetched.
-                    ((ApplicantEntity) applicantEntity).setBody(null);
                     generator.writeObject(applicantEntity);
                 }
                 generator.writeEndArray();
@@ -213,8 +220,12 @@ public class ApplicantsResource {
         if (applicantEntity == null) {
             return Response.status(410).entity("Applicant not found").build();
         }
+        final ApplicantBodyEntity applicantBodyEntity = entityManager.find(ApplicantBodyEntity.class, id);
+        if (applicantBodyEntity == null) {
+            return Response.status(410).entity("Applicant body not found").build();
+        }
 
-        final StreamingOutput streamingOutput = outputStream -> outputStream.write(applicantEntity.getBody());
+        final StreamingOutput streamingOutput = outputStream -> outputStream.write(applicantBodyEntity.getBody());
         return Response.ok().type(applicantEntity.getMimetype()).entity(streamingOutput).build();
     }
 }

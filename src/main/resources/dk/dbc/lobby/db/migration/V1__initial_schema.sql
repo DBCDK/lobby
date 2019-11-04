@@ -12,8 +12,12 @@ CREATE TABLE applicant (
   state                   applicant_state NOT NULL,
   timeOfCreation          TIMESTAMP WITH TIME ZONE DEFAULT clock_timestamp(),
   timeOfLastModification  TIMESTAMP WITH TIME ZONE,
-  body                    BYTEA NOT NULL,
   additionalInfo          JSONB
 );
 CREATE INDEX applicant_category_index ON applicant(category);
 CREATE INDEX applicant_state_index ON applicant(state);
+
+CREATE TABLE applicant_body (
+    id   TEXT PRIMARY KEY REFERENCES applicant(id) ON DELETE CASCADE,
+    body BYTEA NOT NULL
+);
