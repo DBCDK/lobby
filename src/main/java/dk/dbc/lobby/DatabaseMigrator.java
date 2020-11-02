@@ -42,7 +42,7 @@ public class DatabaseMigrator {
         final Flyway flyway = Flyway.configure()
                 .table("schema_version")
                 .dataSource(dataSource)
-                .locations("classpath:dk.dbc.lobby.db.migration")
+                .locations("classpath:dk/dbc/lobby/db/migration")
                 .load();
         for (MigrationInfo info : flyway.info().all()) {
             LOGGER.info("database migration {} : {} from file '{}'",
