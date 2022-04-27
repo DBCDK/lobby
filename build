@@ -3,9 +3,9 @@
 case "$1" in
     docker)
         echo "### building lobby service docker ###"
-        docker build -f target/docker/Dockerfile --pull --no-cache . -t docker-io.dbc.dk/lobby-service:devel || exit 1
+        docker build -f target/docker/Dockerfile --pull --no-cache . -t docker-metascrum.artifacts.dbccloud.dk/lobby-service:devel || exit 1
         if [[ ! -z "$BUILD_NUMBER" ]]; then
-            docker tag docker-io.dbc.dk/lobby-service:devel docker-io.dbc.dk/lobby-service:${BRANCH_NAME}-${BUILD_NUMBER}
+            docker tag docker-metascrum.artifacts.dbccloud.dk/lobby-service:devel docker-metascrum.artifacts.dbccloud.dk/lobby-service:${BRANCH_NAME}-${BUILD_NUMBER}
         fi
         ;;
 

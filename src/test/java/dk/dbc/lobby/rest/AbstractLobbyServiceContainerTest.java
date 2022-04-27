@@ -35,7 +35,7 @@ public abstract class AbstractLobbyServiceContainerTest {
     static final HttpClient httpClient;
 
     static {
-        lobbyServiceContainer = new GenericContainer("docker-io.dbc.dk/lobby-service:devel")
+        lobbyServiceContainer = new GenericContainer("docker-metascrum.artifacts.dbccloud.dk/lobby-service:devel")
                 .withLogConsumer(new Slf4jLogConsumer(LOGGER))
                 .withEnv("JAVA_MAX_HEAP_SIZE", "2G")
                 .withEnv("LOG_FORMAT", "text")
