@@ -1,7 +1,3 @@
-/*
- * Copyright Dansk Bibliotekscenter a/s. Licensed under GPLv3
- * See license text in LICENSE.txt or at https://opensource.dbc.dk/licenses/gpl-3.0/
- */
 
 package dk.dbc.lobby.model;
 
@@ -39,6 +35,7 @@ public class ApplicantEntity {
             "SELECT applicant FROM ApplicantEntity applicant";
     public static final String GET_OUTDATED_APPLICANTS = "getOutdatedApplicants";
 
+    // Please note that when used in a query, then the string value MUST be used
     public enum State {
         ACCEPTED, PENDING,
     }
