@@ -35,7 +35,7 @@ class ApplicantStateConverterTest {
 
     @Test
     void toEntityAttribute_dbValueArgIsNull_throws() {
-        assertThrows(IllegalArgumentException.class, () -> converter.convertToEntityAttribute(null));
+        assertThat(converter.convertToEntityAttribute(null), is(nullValue()));
     }
 
     @Test

@@ -33,7 +33,7 @@ public class ApplicantStateConverter implements AttributeConverter<ApplicantEnti
     @Override
     public ApplicantEntity.State convertToEntityAttribute(Object dbValue) {
         if (dbValue == null) {
-            throw new IllegalArgumentException("dbValue can not be null");
+            return null;
         }
         return ApplicantEntity.State.valueOf((String) dbValue);
     }

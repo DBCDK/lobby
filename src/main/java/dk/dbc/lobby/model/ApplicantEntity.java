@@ -39,6 +39,7 @@ public class ApplicantEntity {
             "SELECT applicant FROM ApplicantEntity applicant";
     public static final String GET_OUTDATED_APPLICANTS = "getOutdatedApplicants";
 
+    // Please note that when used in a query, then the string value MUST be used
     public enum State {
         ACCEPTED, PENDING,
     }
