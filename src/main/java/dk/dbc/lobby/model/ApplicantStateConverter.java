@@ -1,4 +1,3 @@
-
 package dk.dbc.lobby.model;
 
 import org.postgresql.util.PGobject;

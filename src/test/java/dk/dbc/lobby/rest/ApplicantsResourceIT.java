@@ -1,4 +1,3 @@
-
 package dk.dbc.lobby.rest;
 
 import dk.dbc.httpclient.HttpDelete;

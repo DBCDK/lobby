@@ -1,4 +1,3 @@
-
 package dk.dbc.lobby.rest;
 
 import com.fasterxml.jackson.core.JsonEncoding;
@@ -102,7 +101,7 @@ public class ApplicantsResource {
 
     /**
      * Performs a clean operation on lobby database
-     *
+     * <p>
      * Specific behavior depends on state.
      * Types:
      *      - ACCEPTED : Cleaned after 6 months
