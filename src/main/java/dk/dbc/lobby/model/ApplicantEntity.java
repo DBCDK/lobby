@@ -9,6 +9,8 @@ import dk.dbc.jsonb.JSONBContext;
 import dk.dbc.jsonb.JSONBException;
 import dk.dbc.jsonb.JsonNodeConverter;
 import javax.persistence.Column;
+import javax.persistence.ColumnResult;
+import javax.persistence.ConstructorResult;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -16,6 +18,7 @@ import javax.persistence.NamedNativeQueries;
 import javax.persistence.NamedNativeQuery;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
+import javax.persistence.SqlResultSetMapping;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.sql.Timestamp;
@@ -30,9 +33,26 @@ import java.util.Date;
 @Entity
 @Table(name = "applicant")
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@SqlResultSetMapping(name="applicantResult", classes = {
+        @ConstructorResult(targetClass = ApplicantEntity.class,
+                columns = {
+                        @ColumnResult(name="id"),
+                        @ColumnResult(name="category"),
+                        @ColumnResult(name="mimetype"),
+                        @ColumnResult(name="state"),
+                        @ColumnResult(name="timeOfCreation"),
+                        @ColumnResult(name="timeOfLastModification"),
+                        @ColumnResult(name="additionalInfo")})
+})
 public class ApplicantEntity {
     public static final String GET_APPLICANTS_QUERY =
             "SELECT applicant FROM ApplicantEntity applicant";
+    public static final String GET_APPLICANTS_BY_ADDITIONAL_INFO_QUERY =
+            "SELECT id, category, mimetype, state, timeOfCreation, timeOfLastModification, additionalInfo FROM applicant";
+
+    public static final String GET_APPLICANTS_BY_ADDITIONAL_INFO_SQL_RESULT_SET_MAPPER =
+            "applicantResult";
+
     public static final String GET_OUTDATED_APPLICANTS = "getOutdatedApplicants";
 
     // Please note that when used in a query, then the string value MUST be used
@@ -69,6 +89,20 @@ public class ApplicantEntity {
     @PreUpdate
     void onDatabaseCommit() {
         this.timeOfLastModification = new Timestamp(new Date().getTime());
+    }
+
+    public ApplicantEntity() {}
+
+    public ApplicantEntity(String id, String category, String mimetype, String state, Timestamp timeOfCreation, Timestamp timeOfLastModification, org.postgresql.util.PGobject additionalInfo) {
+        this.id = id;
+        this.category = category;
+        this.mimetype = mimetype;
+        this.state = State.valueOf(state);
+        this.timeOfCreation = timeOfCreation;
+        this.timeOfLastModification = timeOfLastModification;
+
+        JsonNodeConverter converter = new JsonNodeConverter();
+        this.additionalInfo = converter.convertToEntityAttribute(additionalInfo);
     }
 
     public String getId() {
