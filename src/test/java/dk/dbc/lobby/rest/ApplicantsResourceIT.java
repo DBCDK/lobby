@@ -4,10 +4,7 @@ import dk.dbc.httpclient.HttpDelete;
 import dk.dbc.httpclient.HttpGet;
 import dk.dbc.httpclient.HttpPut;
 import dk.dbc.httpclient.PathBuilder;
-import dk.dbc.lobby.model.ApplicantEntity;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -17,7 +14,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
@@ -35,8 +31,9 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                         .bind("id", "unknown")
                         .build());
 
-        final Response response = httpClient.execute(httpPut);
-        assertThat(response.getStatus(), is(400));
+        try (Response response = httpClient.execute(httpPut)) {
+            assertThat(response.getStatus(), is(400));
+        }
     }
 
     @Test
@@ -48,8 +45,9 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                         .bind("id", "unknown")
                         .build());
 
-        final Response response = httpClient.execute(httpPut);
-        assertThat(response.getStatus(), is(422));
+        try (Response response = httpClient.execute(httpPut)) {
+            assertThat(response.getStatus(), is(422));
+        }
     }
 
     @Test
@@ -80,8 +78,9 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                         .bind("id", "unknown")
                         .build());
 
-        final Response response = httpClient.execute(httpPut);
-        assertThat(response.getStatus(), is(410));
+        try (Response response = httpClient.execute(httpPut)) {
+            assertThat(response.getStatus(), is(410));
+        }
     }
 
     @Test
@@ -97,8 +96,9 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                         .bind("id", id)
                         .build());
 
-        final Response response = httpClient.execute(httpPut);
-        assertThat(response.getStatus(), is(422));
+        try (Response response = httpClient.execute(httpPut)) {
+            assertThat(response.getStatus(), is(422));
+        }
     }
 
     @Test
@@ -114,9 +114,10 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                         .bind("id", id)
                         .build());
 
-        final Response response = httpClient.execute(httpPut);
-        assertThat("response status", response.getStatus(),
-                is(200));
+        try (Response response = httpClient.execute(httpPut)) {
+            assertThat("response status", response.getStatus(),
+                    is(200));
+        }
         assertThat("state updated", getApplicantById(id).get("state"),
                 is("ACCEPTED"));
     }
@@ -129,8 +130,9 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                         .bind("id", "unknown")
                         .build());
 
-        final Response response = httpClient.execute(httpGet);
-        assertThat(response.getStatus(), is(410));
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat(response.getStatus(), is(410));
+        }
     }
 
     @Test
@@ -145,13 +147,14 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                         .bind("id", id)
                         .build());
 
-        final Response response = httpClient.execute(httpGet);
-        assertThat("response status", response.getStatus(),
-                is(200));
-        assertThat("response mimetype", response.getMediaType().toString(),
-                is(MediaType.TEXT_PLAIN));
-        assertThat("applicant body", response.readEntity(String.class),
-                is("hello world"));
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat("response status", response.getStatus(),
+                    is(200));
+            assertThat("response mimetype", response.getMediaType().toString(),
+                    is(MediaType.TEXT_PLAIN));
+            assertThat("applicant body", response.readEntity(String.class),
+                    is("hello world"));
+        }
     }
 
     @Test
@@ -161,8 +164,9 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                 .withQueryParameter("state", "NOT_A_KNOWN_STATE")
                 .withPathElements(new PathBuilder("/v1/api/applicants").build());
 
-        final Response response = httpClient.execute(httpGet);
-        assertThat(response.getStatus(), is(422));
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat(response.getStatus(), is(422));
+        }
     }
 
     @Test
@@ -173,11 +177,12 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                 .withQueryParameter("state", "PENDING")
                 .withPathElements(new PathBuilder("/v1/api/applicants").build());
 
-        final Response response = httpClient.execute(httpGet);
-        assertThat("response state", response.getStatus(),
-                is(200));
-        assertThat("response content", response.readEntity(String.class),
-                is("[]"));
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat("response state", response.getStatus(),
+                    is(200));
+            assertThat("response content", response.readEntity(String.class),
+                    is("[]"));
+        }
     }
 
     @Test
@@ -190,10 +195,12 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                 .withQueryParameter("state", "PENDING")
                 .withPathElements(new PathBuilder("/v1/api/applicants").build());
 
-        final Response response = httpClient.execute(httpGet);
-        assertThat("response state", response.getStatus(),
-                is(200));
-        final String json = response.readEntity(String.class);
+        final String json;
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat("response state", response.getStatus(),
+                    is(200));
+            json = response.readEntity(String.class);
+        }
         assertThat("getApplicants-1 in response", json,
                 containsString("\"id\":\"getApplicants-1\""));
         assertThat("getApplicants-2 not in response", json,
@@ -213,8 +220,9 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                 .withQueryParameter("user", "192556")
                 .withPathElements(new PathBuilder("/v1/api/applicants/additionalInfo").build());
 
-        final Response response = httpClient.execute(httpGet);
-        assertThat(response.getStatus(), is(422));
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat(response.getStatus(), is(422));
+        }
     }
 
     @Test
@@ -227,11 +235,12 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                 .withQueryParameter("user", "192556")
                 .withPathElements(new PathBuilder("/v1/api/applicants/additionalInfo").build());
 
-        final Response response = httpClient.execute(httpGet);
-        assertThat("response state", response.getStatus(),
-                is(200));
-        assertThat("response content", response.readEntity(String.class),
-                is("[]"));
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat("response state", response.getStatus(),
+                    is(200));
+            assertThat("response content", response.readEntity(String.class),
+                    is("[]"));
+        }
     }
 
     @Test
@@ -245,10 +254,12 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                 .withQueryParameter("state", "PENDING")
                 .withPathElements(new PathBuilder("/v1/api/applicants/additionalInfo").build());
 
-        Response response = httpClient.execute(httpGet);
-        assertThat("response state", response.getStatus(),
-                is(200));
-        String json = response.readEntity(String.class);
+        String json;
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat("response state", response.getStatus(),
+                    is(200));
+            json = response.readEntity(String.class);
+        }
         assertThat("getApplicants-1 in response", json,
                 containsString("\"id\":\"getApplicants-1\""));
         assertThat("getApplicants-2 not in response", json,
@@ -271,10 +282,12 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                 .withQueryParameter("agency", "761500")
                 .withPathElements(new PathBuilder("/v1/api/applicants/additionalInfo").build());
 
-        Response response = httpClient.execute(httpGet);
-        assertThat("response state", response.getStatus(),
-                is(200));
-        String json = response.readEntity(String.class);
+        String json;
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat("response state", response.getStatus(),
+                    is(200));
+            json = response.readEntity(String.class);
+        }
         assertThat("getApplicants-1 in response", json,
                 not(containsString("\"id\":\"getApplicants-1\"")));
         assertThat("getApplicants-2 not in response", json,
@@ -296,10 +309,12 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                 .withQueryParameter("agency", "761500")
                 .withPathElements(new PathBuilder("/v1/api/applicants/additionalInfo").build());
 
-        Response response = httpClient.execute(httpGet);
-        assertThat("response state", response.getStatus(),
-                is(200));
-        String json = response.readEntity(String.class);
+        String json;
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat("response state", response.getStatus(),
+                    is(200));
+            json = response.readEntity(String.class);
+        }
 
         assertThat("id in response", json,
                 containsString("\"id\":\"getApplicants-3\""));
