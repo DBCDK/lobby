@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+source "$(realpath $(dirname "${0}")/..)/scripts/common"
+
+docker run  -ti --rm --name "${DOCKER_NAME}-${PORT}" \
+  -e JAVA_MAX_HEAP_SIZE=${JAVA_MAX_HEAP_SIZE} \
+  -e LOBBY_DB_URL=${LOBBY_DB_URL} \
+  -p ${LOBBY_SERVICE_PORT}:8080 \
+  ${ENABLE_REMOTE_DEBUGGING:+ -p 9009:9009} \
+  $@ \
+  "${DOCKER_REPOSITORY}:devel"

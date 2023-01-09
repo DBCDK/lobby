@@ -77,8 +77,8 @@ pipeline {
 			steps {
 				script {
 					sh """  
-                        set-new-version services/lobby.yml ${env.GITLAB_PRIVATE_TOKEN} metascrum/lobby-secrets  ${env.BRANCH_NAME}-${env.BUILD_NUMBER} -b staging
-                    """
+            set-new-version services/lobby.yml ${env.GITLAB_PRIVATE_TOKEN} metascrum/lobby-secrets  ${env.BRANCH_NAME}-${env.BUILD_NUMBER} -b staging
+          """
 				}
 			}
 		}

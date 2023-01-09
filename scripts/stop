@@ -1,0 +1,5 @@
+echo "### Stopping lobby service docker ###"
+
+source "$(realpath $(dirname "${0}")/..)/scripts/common"
+
+docker rm -f "${DOCKER_NAME}-${PORT}" || exit 1

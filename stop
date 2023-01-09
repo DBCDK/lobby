@@ -1,3 +1,0 @@
-echo "### Stopping lobby service docker ###"
-
-docker stop lobby-service || exit 1

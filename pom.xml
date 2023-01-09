@@ -108,7 +108,7 @@
               <goal>exec</goal>
             </goals>
             <configuration>
-              <executable>build</executable>
+              <executable>scripts/build</executable>
               <arguments>
                 <argument>docker</argument>
               </arguments>
