@@ -198,7 +198,7 @@ public class ApplicantsResource {
      * Returns list of applicants (including body content) matched by optional filters.
      * Filters may be applied also to fields in the additionalInfo object not having
      * the same name as the protected names 'category' and 'state' by passing them
-     * in as extra query parameters: "{&literal &}agency=123456{&literal &}user=192556"
+     * in as extra query parameters: agency=123456 or user=192556
      * @param category category filter
      * @param stateStr state filter
      * @return an HTTP 200 Ok response streaming applicants as JSON array,
