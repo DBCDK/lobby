@@ -42,8 +42,6 @@ public class ApplicantsResource {
     @PersistenceContext(unitName = "lobbyPU")
     private EntityManager entityManager;
 
-    //@Context UriInfo uriInfo;
-
     /**
      * Creates applicant resource with ID specified by the path
      * or completely replaces and existing applicant
