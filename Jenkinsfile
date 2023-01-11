@@ -6,6 +6,7 @@ pipeline {
 	agent {label workerNode}
 	tools {
 		// refers to the name set in manage jenkins -> global tool configuration
+		jdk 'jdk11'
 		maven "Maven 3"
 	}
 	environment {
