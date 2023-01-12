@@ -228,8 +228,10 @@ public class ApplicantsResource {
         QueryBuilder queryBuilder = new QueryBuilder(
                 ApplicantEntity.GET_APPLICANTS_BY_ADDITIONAL_INFO_QUERY,
                 ApplicantEntity.GET_APPLICANTS_BY_ADDITIONAL_INFO_SQL_RESULT_SET_MAPPER)
-                .and("applicant.category", category)
-                .and("CAST(applicant.state AS TEXT)", String.format("%s", state));
+                .and("applicant.category", category);
+        if (stateStr != null && !stateStr.isEmpty()) {
+            queryBuilder.and("CAST(applicant.state AS TEXT)", String.format("%s", state));
+        }
         for (String name : additionalFilters.keySet()) {
             queryBuilder = queryBuilder.json(name, additionalFilters.get(name));
         }
