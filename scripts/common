@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+set -e
+
+getMyIP() {
+    local _ip _line
+    while IFS=$': \t' read -a _line ;do
+        [ -z "${_line%inet}" ] &&
+           _ip=${_line[${#_line[1]}>4?1:2]} &&
+           [ "${_ip#127.0.0.1}" ] && echo $_ip && return 0
+      done< <(LANG=C /sbin/ifconfig)
+}
+
+# build and test run values
+PORT=${PORT:-8080}
+DB_PORT=${DB_PORT:-5432}
+DOCKER_NAMESPACE=docker-metascrum.artifacts.dbccloud.dk
+DOCKER_NAME=lobby-service
+DOCKER_REPOSITORY=${DOCKER_NAMESPACE}/${DOCKER_NAME}
+
+# sample app values
+LOBBY_DB_URL=${LOBBY_DB_URL:-"${USER}:${USER}@$(getMyIP):${DB_PORT}/${USER}"}
+LOBBY_SERVICE_PORT=${LOBBY_SERVICE_PORT:-8080}
+
+# base image mandatory values
+JAVA_MAX_HEAP_SIZE=${JAVA_MAX_HEAP_SIZE:-2G}
+
+# Lets color a bit. This is clearly a waste of time... (setup in load function).
+_NOCOLOR=
+_ERROR_COLOR=
+_INFO_COLOR=
+function info() {
+  echo "$(date +"%T.%N") ${_INFO_COLOR}INFO :${_NOCOLOR}" "$@"
+}
+
+function debug() {
+  echo "$(date +"%T.%N") DEBUG:" "$@"
+}
+
+function error() {
+  echo "$(date +"%T.%N") ${_ERROR_COLOR}ERROR:${_NOCOLOR}" "$@"
+}
+
+function die() {
+  error "$@"
+  exit 1
+}
+
+# If tty output, lets put some colors on.
+if [ -t 1 ] ; then
+  _INFO_COLOR=$(tput setaf 2)  # Green
+  _ERROR_COLOR=$(tput setaf 1)
+  _NOCOLOR=$(tput sgr0)
+fi

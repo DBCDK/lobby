@@ -1,9 +1,6 @@
-/*
- * Copyright Dansk Bibliotekscenter a/s. Licensed under GPLv3
- * See license text in LICENSE.txt or at https://opensource.dbc.dk/licenses/gpl-3.0/
- */
-
 package dk.dbc.lobby.rest;
+
+import dk.dbc.lobby.model.ApplicantEntity;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -26,8 +23,15 @@ class QueryBuilder {
 
     private String toStringRepresentation;
 
+    private String sqlResultSetMapper;
+
     QueryBuilder(String baseQuery) {
+        this(baseQuery, null);
+    }
+
+    QueryBuilder(String baseQuery, String sqlResultSetMapper) {
         this.baseString = baseQuery;
+        this.sqlResultSetMapper = sqlResultSetMapper;
         toStringRepresentation = baseString;
     }
 
@@ -40,8 +44,22 @@ class QueryBuilder {
         return this;
     }
 
+    QueryBuilder json(String field, String value) {
+        if (sqlResultSetMapper == null) {
+            throw new IllegalArgumentException("json(...) not allowed on typed query");
+        }
+        if (field != null && value != null) {
+            parameters.add("additionalInfo ->> '" + field + "'");
+            values.add(value);
+            toStringRepresentation = null;
+        }
+        return this;
+    }
+
     Query build(EntityManager entityManager) {
-        final Query query = entityManager.createQuery(toString());
+        final Query query = sqlResultSetMapper == null
+                ? entityManager.createQuery(toString(), ApplicantEntity.class)
+                : entityManager.createNativeQuery(toString(), sqlResultSetMapper);
         for (int i = 0; i < values.size(); i++) {
             query.setParameter(i+1, values.get(i));
         }

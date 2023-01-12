@@ -1,4 +1,3 @@
-
 package dk.dbc.lobby.rest;
 
 import dk.dbc.httpclient.HttpDelete;
@@ -22,6 +21,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
+
     @Test
     void createOrReplaceApplicant_invalidJson() {
         final HttpPut httpPut = new HttpPut(httpClient)
@@ -31,8 +31,9 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                         .bind("id", "unknown")
                         .build());
 
-        final Response response = httpClient.execute(httpPut);
-        assertThat(response.getStatus(), is(400));
+        try (Response response = httpClient.execute(httpPut)) {
+            assertThat(response.getStatus(), is(400));
+        }
     }
 
     @Test
@@ -44,8 +45,9 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                         .bind("id", "unknown")
                         .build());
 
-        final Response response = httpClient.execute(httpPut);
-        assertThat(response.getStatus(), is(422));
+        try (Response response = httpClient.execute(httpPut)) {
+            assertThat(response.getStatus(), is(422));
+        }
     }
 
     @Test
@@ -76,8 +78,9 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                         .bind("id", "unknown")
                         .build());
 
-        final Response response = httpClient.execute(httpPut);
-        assertThat(response.getStatus(), is(410));
+        try (Response response = httpClient.execute(httpPut)) {
+            assertThat(response.getStatus(), is(410));
+        }
     }
 
     @Test
@@ -93,8 +96,9 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                         .bind("id", id)
                         .build());
 
-        final Response response = httpClient.execute(httpPut);
-        assertThat(response.getStatus(), is(422));
+        try (Response response = httpClient.execute(httpPut)) {
+            assertThat(response.getStatus(), is(422));
+        }
     }
 
     @Test
@@ -110,9 +114,10 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                         .bind("id", id)
                         .build());
 
-        final Response response = httpClient.execute(httpPut);
-        assertThat("response status", response.getStatus(),
-                is(200));
+        try (Response response = httpClient.execute(httpPut)) {
+            assertThat("response status", response.getStatus(),
+                    is(200));
+        }
         assertThat("state updated", getApplicantById(id).get("state"),
                 is("ACCEPTED"));
     }
@@ -125,8 +130,9 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                         .bind("id", "unknown")
                         .build());
 
-        final Response response = httpClient.execute(httpGet);
-        assertThat(response.getStatus(), is(410));
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat(response.getStatus(), is(410));
+        }
     }
 
     @Test
@@ -141,13 +147,14 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                         .bind("id", id)
                         .build());
 
-        final Response response = httpClient.execute(httpGet);
-        assertThat("response status", response.getStatus(),
-                is(200));
-        assertThat("response mimetype", response.getMediaType().toString(),
-                is(MediaType.TEXT_PLAIN));
-        assertThat("applicant body", response.readEntity(String.class),
-                is("hello world"));
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat("response status", response.getStatus(),
+                    is(200));
+            assertThat("response mimetype", response.getMediaType().toString(),
+                    is(MediaType.TEXT_PLAIN));
+            assertThat("applicant body", response.readEntity(String.class),
+                    is("hello world"));
+        }
     }
 
     @Test
@@ -157,8 +164,9 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                 .withQueryParameter("state", "NOT_A_KNOWN_STATE")
                 .withPathElements(new PathBuilder("/v1/api/applicants").build());
 
-        final Response response = httpClient.execute(httpGet);
-        assertThat(response.getStatus(), is(422));
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat(response.getStatus(), is(422));
+        }
     }
 
     @Test
@@ -169,24 +177,17 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                 .withQueryParameter("state", "PENDING")
                 .withPathElements(new PathBuilder("/v1/api/applicants").build());
 
-        final Response response = httpClient.execute(httpGet);
-        assertThat("response state", response.getStatus(),
-                is(200));
-        assertThat("response content", response.readEntity(String.class),
-                is("[]"));
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat("response state", response.getStatus(),
+                    is(200));
+            assertThat("response content", response.readEntity(String.class),
+                    is("[]"));
+        }
     }
 
     @Test
     void getApplicants() {
-        final String id1 = "getApplicants-1";
-        createOrReplaceApplicant(id1,
-                "{\"id\":\"getApplicants-1\",\"category\":\"getApplicants\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
-        final String id2 = "getApplicants-2";
-        createOrReplaceApplicant(id2,
-                "{\"id\":\"getApplicants-2\",\"category\":\"getApplicants\",\"mimetype\":\"text/plain\",\"state\":\"ACCEPTED\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
-        final String id3 = "getApplicants-3";
-        createOrReplaceApplicant(id3,
-                "{\"id\":\"getApplicants-3\",\"category\":\"getApplicants\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
+        createOrReplaceApplicantsForQuery();
 
         final HttpGet httpGet = new HttpGet(httpClient)
                 .withBaseUrl(lobbyServiceBaseUrl)
@@ -194,10 +195,12 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                 .withQueryParameter("state", "PENDING")
                 .withPathElements(new PathBuilder("/v1/api/applicants").build());
 
-        final Response response = httpClient.execute(httpGet);
-        assertThat("response state", response.getStatus(),
-                is(200));
-        final String json = response.readEntity(String.class);
+        final String json;
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat("response state", response.getStatus(),
+                    is(200));
+            json = response.readEntity(String.class);
+        }
         assertThat("getApplicants-1 in response", json,
                 containsString("\"id\":\"getApplicants-1\""));
         assertThat("getApplicants-2 not in response", json,
@@ -208,7 +211,128 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                 not(containsString("\"body\":")));
     }
 
+    @Test
+    void getApplicantsByAdditionalInfo_invalidStateFilter() {
+        final HttpGet httpGet = new HttpGet(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withQueryParameter("state", "NOT_A_KNOWN_STATE")
+                .withQueryParameter("agency", "123456")
+                .withQueryParameter("user", "192556")
+                .withPathElements(new PathBuilder("/v1/api/applicants/additionalInfo").build());
 
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat(response.getStatus(), is(422));
+        }
+    }
+
+    @Test
+    void getApplicantsByAdditionalInfo_emptyResult() {
+        final HttpGet httpGet = new HttpGet(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withQueryParameter("category", "NOT_A_KNOWN_CATEGORY")
+                .withQueryParameter("state", "PENDING")
+                .withQueryParameter("agency", "123456")
+                .withQueryParameter("user", "192556")
+                .withPathElements(new PathBuilder("/v1/api/applicants/additionalInfo").build());
+
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat("response state", response.getStatus(),
+                    is(200));
+            assertThat("response content", response.readEntity(String.class),
+                    is("[]"));
+        }
+    }
+
+    @Test
+    void getApplicantsByAdditionalInfoWithNoFilter() {
+        createOrReplaceApplicantsForQuery();
+
+        // Check that a query without filtering on any additional info fields should yield the two pending results
+        HttpGet httpGet = new HttpGet(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withQueryParameter("category", "getApplicants")
+                .withQueryParameter("state", "PENDING")
+                .withPathElements(new PathBuilder("/v1/api/applicants/additionalInfo").build());
+
+        String json;
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat("response state", response.getStatus(),
+                    is(200));
+            json = response.readEntity(String.class);
+        }
+        assertThat("getApplicants-1 in response", json,
+                containsString("\"id\":\"getApplicants-1\""));
+        assertThat("getApplicants-2 not in response", json,
+                not(containsString("\"id\":\"getApplicants-2\"")));
+        assertThat("getApplicants-3 in response", json,
+                containsString("\"id\":\"getApplicants-3\""));
+        assertThat("body is not contained in response", json,
+                not(containsString("\"body\":")));
+    }
+
+    @Test
+    void getApplicantsByAdditionalInfoWithFilter() {
+        createOrReplaceApplicantsForQuery();
+
+        // Check that a query with filtering on the additional 'agency' field should yield the single pending result with that agency
+        HttpGet httpGet = new HttpGet(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withQueryParameter("category", "getApplicants")
+                .withQueryParameter("state", "PENDING")
+                .withQueryParameter("agency", "761500")
+                .withPathElements(new PathBuilder("/v1/api/applicants/additionalInfo").build());
+
+        String json;
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat("response state", response.getStatus(),
+                    is(200));
+            json = response.readEntity(String.class);
+        }
+        assertThat("getApplicants-1 in response", json,
+                not(containsString("\"id\":\"getApplicants-1\"")));
+        assertThat("getApplicants-2 not in response", json,
+                not(containsString("\"id\":\"getApplicants-2\"")));
+        assertThat("getApplicants-3 in response", json,
+                containsString("\"id\":\"getApplicants-3\""));
+        assertThat("body is not contained in response", json,
+                not(containsString("\"body\":")));
+    }
+
+    @Test
+    void checkApplicantReturnedByAdditionalInfoQuery() {
+        createOrReplaceApplicantsForQuery();
+
+        HttpGet httpGet = new HttpGet(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withQueryParameter("category", "getApplicants")
+                .withQueryParameter("state", "PENDING")
+                .withQueryParameter("agency", "761500")
+                .withPathElements(new PathBuilder("/v1/api/applicants/additionalInfo").build());
+
+        String json;
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat("response state", response.getStatus(),
+                    is(200));
+            json = response.readEntity(String.class);
+        }
+
+        assertThat("id in response", json,
+                containsString("\"id\":\"getApplicants-3\""));
+        assertThat("category in response", json,
+                containsString("\"category\":\"getApplicants\""));
+        assertThat("mimetype in response", json,
+                containsString("\"mimetype\":\"text/plain\""));
+        assertThat("state in response", json,
+                containsString("\"state\":\"PENDING\""));
+        assertThat("timeOfCreation in response", json,
+                containsString("\"timeOfCreation\":"));
+        assertThat("timeOfLastModification in response", json,
+                containsString("\"timeOfLastModification\":"));
+        assertThat("body is not contained in response", json,
+                not(containsString("\"body\":")));
+        assertThat("additionalInfo in response", json,
+                containsString("\"additionalInfo\":{\"agency\":\"761500\"}"));
+    }
 
     @Test
     void deleteOutdatedApplicants() {
@@ -252,6 +376,20 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                         .bind("id", id)
                         .build());
         return httpClient.execute(httpPut);
+    }
+
+    private void createOrReplaceApplicantsForQuery() {
+        final String id1 = "getApplicants-1";
+        createOrReplaceApplicant(id1,
+                "{\"id\":\"getApplicants-1\",\"category\":\"getApplicants\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\",\"additionalInfo\":{\"agency\":\"010100\"}}");
+
+        final String id2 = "getApplicants-2";
+        createOrReplaceApplicant(id2,
+                "{\"id\":\"getApplicants-2\",\"category\":\"getApplicants\",\"mimetype\":\"text/plain\",\"state\":\"ACCEPTED\",\"body\":\"aGVsbG8gd29ybGQ=\",\"additionalInfo\":{\"agency\":\"761500\"}}");
+
+        final String id3 = "getApplicants-3";
+        createOrReplaceApplicant(id3,
+                "{\"id\":\"getApplicants-3\",\"category\":\"getApplicants\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\",\"additionalInfo\":{\"agency\":\"761500\"}}");
     }
 
     static void outdateThisApplicant(String id) {

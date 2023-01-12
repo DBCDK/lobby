@@ -1,4 +1,3 @@
-
 package dk.dbc.lobby.rest;
 
 import com.fasterxml.jackson.core.JsonEncoding;
@@ -23,12 +22,17 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Stateless
 @Path("/v1/api/applicants")
@@ -102,7 +106,7 @@ public class ApplicantsResource {
 
     /**
      * Performs a clean operation on lobby database
-     *
+     * <p>
      * Specific behavior depends on state.
      * Types:
      *      - ACCEPTED : Cleaned after 6 months
@@ -169,6 +173,7 @@ public class ApplicantsResource {
             @QueryParam("category") String category,
             @QueryParam("state") String stateStr) {
 
+        //noinspection DuplicatedCode
         Object state = null;
         try {
             if (stateStr != null) {
@@ -183,24 +188,55 @@ public class ApplicantsResource {
                 .and("applicant.state", state);
         LOGGER.debug("GET /applicants query {}", queryBuilder.toString());
 
-        final List resultSet = queryBuilder.build(entityManager).getResultList();
+        @SuppressWarnings("unchecked")
+        final List<ApplicantEntity> resultSet = queryBuilder.build(entityManager).getResultList();
 
-        final StreamingOutput applicantsStreamingOutput = outputStream -> {
-            final JsonGenerator generator = new ObjectMapper().getFactory()
-                    .createGenerator(outputStream, JsonEncoding.UTF8);
-            try {
-                generator.writeStartArray();
-                for (Object applicantEntity : resultSet) {
-                    generator.writeObject(applicantEntity);
-                }
-                generator.writeEndArray();
-            } finally {
-                generator.flush();
-                generator.close();
+        return getStreamingResponse(resultSet);
+    }
+
+    /**
+     * Returns list of applicants (not including body content) matched by optional filters.
+     * Filters may be applied also to fields in the additionalInfo object not having
+     * the same name as the protected names 'category' and 'state' by passing them
+     * in as extra query parameters like this: agency=123456 or user=192556
+     * @param category category filter
+     * @param stateStr state filter
+     * @return an HTTP 200 Ok response streaming applicants as JSON array,
+     *         an HTTP 422 Unprocessable Entity response when the state parameter can not
+     *                    be converted into a legal state value.
+     */
+    @GET
+    @Path("/additionalInfo")
+    @Produces(MediaType.APPLICATION_JSON)
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public Response getApplicantsByAdditionalInfo(
+            @QueryParam("category") String category,
+            @QueryParam("state") String stateStr, @Context UriInfo uriInfo) {
+
+        //noinspection DuplicatedCode
+        Object state = null;
+        try {
+            if (stateStr != null) {
+                state = ApplicantEntity.State.valueOf(stateStr);
             }
-        };
+        } catch (IllegalArgumentException e) {
+            return Response.status(422).entity("Illegal state value " + stateStr).build();
+        }
 
-        return Response.ok().entity(applicantsStreamingOutput).build();
+        Map<String, String> additionalFilters = getAdditionalFilters(uriInfo);
+        QueryBuilder queryBuilder = new QueryBuilder(
+                ApplicantEntity.GET_APPLICANTS_BY_ADDITIONAL_INFO_QUERY,
+                ApplicantEntity.GET_APPLICANTS_BY_ADDITIONAL_INFO_SQL_RESULT_SET_MAPPER)
+                .and("applicant.category", category)
+                .and("CAST(applicant.state AS TEXT)", String.format("%s", state));
+        for (String name : additionalFilters.keySet()) {
+            queryBuilder = queryBuilder.json(name, additionalFilters.get(name));
+        }
+        LOGGER.info("GET /applicants/additionalFilter query {}", queryBuilder.toString());
+
+        @SuppressWarnings("unchecked")
+        final List<ApplicantEntity> resultSet = (List<ApplicantEntity>) queryBuilder.build(entityManager).getResultList();
+        return getStreamingResponse(resultSet);
     }
 
     /**
@@ -223,5 +259,39 @@ public class ApplicantsResource {
 
         final StreamingOutput streamingOutput = outputStream -> outputStream.write(applicantBodyEntity.getBody());
         return Response.ok().type(applicantEntity.getMimetype()).entity(streamingOutput).build();
+    }
+
+    private Response getStreamingResponse(List<ApplicantEntity> resultSet) {
+        final StreamingOutput applicantsStreamingOutput = outputStream -> {
+            final JsonGenerator generator = new ObjectMapper().getFactory()
+                    .createGenerator(outputStream, JsonEncoding.UTF8);
+            try {
+                generator.writeStartArray();
+                for (Object applicantEntity : resultSet) {
+                    generator.writeObject(applicantEntity);
+                }
+                generator.writeEndArray();
+            } finally {
+                generator.flush();
+                generator.close();
+            }
+        };
+        return Response.ok().entity(applicantsStreamingOutput).build();
+    }
+
+    private Map<String, String> getAdditionalFilters(UriInfo uriInfo) {
+        if( uriInfo == null || uriInfo.getQueryParameters() == null) {
+            return Map.of();
+        }
+
+        List<String> additionalParameterNames = new ArrayList<>(uriInfo.getQueryParameters().keySet());
+        additionalParameterNames.removeIf(k -> Set.of("state", "category").contains(k));
+
+        Map<String, String> additionalParameters = new HashMap<>();
+        for (String name : additionalParameterNames.stream().distinct().collect(Collectors.toList())) {
+            additionalParameters.put(name, uriInfo.getQueryParameters().getFirst(name));
+        }
+
+        return additionalParameters;
     }
 }

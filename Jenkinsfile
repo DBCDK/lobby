@@ -6,6 +6,7 @@ pipeline {
 	agent {label workerNode}
 	tools {
 		// refers to the name set in manage jenkins -> global tool configuration
+		jdk 'jdk11'
 		maven "Maven 3"
 	}
 	environment {
@@ -77,8 +78,8 @@ pipeline {
 			steps {
 				script {
 					sh """  
-                        set-new-version services/lobby.yml ${env.GITLAB_PRIVATE_TOKEN} metascrum/lobby-secrets  ${env.BRANCH_NAME}-${env.BUILD_NUMBER} -b staging
-                    """
+            set-new-version services/lobby.yml ${env.GITLAB_PRIVATE_TOKEN} metascrum/lobby-secrets  ${env.BRANCH_NAME}-${env.BUILD_NUMBER} -b staging
+          """
 				}
 			}
 		}

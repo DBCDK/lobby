@@ -31,8 +31,17 @@ To start a local instance, docker is required.
 * stop - stops localhost instance
 
 ```bash
-./clean && ./build && ./test && ./validate && LOBBY_DB="..." ./start
+./scripts/clean && ./scripts/build && ./scripts/test && ./scripts/validate
+./scripts/start-database
 ```
+```bash
+./scripts/start-server
+```
+...use service...
+```bash
+./scripts/stop
+```
+(and ctrl+c in the postgresql container)
 
 ### License
 

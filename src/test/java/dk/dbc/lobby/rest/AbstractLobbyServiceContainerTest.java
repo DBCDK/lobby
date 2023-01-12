@@ -1,8 +1,3 @@
-/*
- * Copyright Dansk Bibliotekscenter a/s. Licensed under GPLv3
- * See license text in LICENSE.txt or at https://opensource.dbc.dk/licenses/gpl-3.0/
- */
-
 package dk.dbc.lobby.rest;
 
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
@@ -30,11 +25,12 @@ public abstract class AbstractLobbyServiceContainerTest {
         Testcontainers.exposeHostPorts(pg.getPort());
     }
 
-    static final GenericContainer lobbyServiceContainer;
+    static final GenericContainer<?> lobbyServiceContainer;
     static final String lobbyServiceBaseUrl;
     static final HttpClient httpClient;
 
     static {
+        //noinspection rawtypes,unchecked
         lobbyServiceContainer = new GenericContainer("docker-metascrum.artifacts.dbccloud.dk/lobby-service:devel")
                 .withLogConsumer(new Slf4jLogConsumer(LOGGER))
                 .withEnv("JAVA_MAX_HEAP_SIZE", "2G")
@@ -45,8 +41,8 @@ public abstract class AbstractLobbyServiceContainerTest {
                 .waitingFor(Wait.forHttp("/status"))
                 .withStartupTimeout(Duration.ofMinutes(5));
         lobbyServiceContainer.start();
-        lobbyServiceBaseUrl = "http://" + lobbyServiceContainer.getContainerIpAddress() +
-                ":" + lobbyServiceContainer.getMappedPort(8080);
+        lobbyServiceBaseUrl = "http://" + lobbyServiceContainer.getHost()
+                + ":" + lobbyServiceContainer.getMappedPort(8080);
         httpClient = HttpClient.create(HttpClient.newClient());
     }
 
