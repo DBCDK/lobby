@@ -201,6 +201,7 @@ public class ApplicantsResource {
      * in as extra query parameters like this: agency=123456 or user=192556
      * @param category category filter
      * @param stateStr state filter
+     * @param uriInfo request information
      * @return an HTTP 200 Ok response streaming applicants as JSON array,
      *         an HTTP 422 Unprocessable Entity response when the state parameter can not
      *                    be converted into a legal state value.
