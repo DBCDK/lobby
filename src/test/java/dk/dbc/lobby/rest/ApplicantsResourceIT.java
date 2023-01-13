@@ -335,6 +335,42 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
     }
 
     @Test
+    void getApplicant_notFound() {
+        final HttpGet httpGet = new HttpGet(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withPathElements(new PathBuilder("/v1/api/applicants/no-such-id").build());
+
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat(response.getStatus(), is(410));
+        }
+    }
+
+    @Test
+    void getApplicant() {
+        createOrReplaceApplicantsForQuery();
+
+        final HttpGet httpGet = new HttpGet(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withPathElements(new PathBuilder("/v1/api/applicants/getApplicants-2").build());
+
+        final String json;
+        try (Response response = httpClient.execute(httpGet)) {
+            assertThat("response state", response.getStatus(),
+                    is(200));
+            json = response.readEntity(String.class);
+        }
+        assertThat("getApplicants-1 not in response", json,
+                not(containsString("\"id\":\"getApplicants-1\"")));
+        assertThat("getApplicants-2 in response", json,
+                containsString("\"id\":\"getApplicants-2\""));
+        assertThat("getApplicants-3 not in response", json,
+                not(containsString("\"id\":\"getApplicants-3\"")));
+        assertThat("body is not contained in response", json,
+                not(containsString("\"body\":")));
+    }
+
+
+    @Test
     void deleteOutdatedApplicants() {
         // Given: Three applicants. One is recent, and accepted. One is accepted and 200 days old.
         //      One is PENDING and 200 days old.
