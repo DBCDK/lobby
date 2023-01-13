@@ -264,6 +264,18 @@ public class ApplicantsResource {
         return Response.ok().type(applicantEntity.getMimetype()).entity(streamingOutput).build();
     }
 
+    @GET
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getApplicant(@PathParam("id") String id) {
+        final ApplicantEntity applicantEntity = entityManager.find(ApplicantEntity.class, id);
+        if (applicantEntity == null) {
+            return Response.status(410).entity("Applicant not found").build();
+        }
+
+        return Response.ok().entity(applicantEntity).build();
+    }
+
     private Response getStreamingResponse(List<ApplicantEntity> resultSet) {
         final StreamingOutput applicantsStreamingOutput = outputStream -> {
             final JsonGenerator generator = new ObjectMapper().getFactory()
