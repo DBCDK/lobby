@@ -27,10 +27,6 @@
             <artifactId>jackson-jakarta-rs-json-provider</artifactId>
             <version>${jackson.version}</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>com.opentable.components</groupId>-->
-<!--            <artifactId>otj-pg-embedded</artifactId>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>dk.dbc</groupId>
             <artifactId>dbc-commons-httpclient</artifactId>
