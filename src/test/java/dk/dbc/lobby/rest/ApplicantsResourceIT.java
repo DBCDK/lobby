@@ -6,8 +6,8 @@ import dk.dbc.httpclient.HttpPut;
 import dk.dbc.httpclient.PathBuilder;
 import org.junit.jupiter.api.Test;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

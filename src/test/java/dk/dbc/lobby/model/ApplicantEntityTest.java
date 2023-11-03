@@ -1,7 +1,7 @@
 package dk.dbc.lobby.model;
 
-import dk.dbc.jsonb.JSONBContext;
-import dk.dbc.jsonb.JSONBException;
+import dk.dbc.commons.jsonb.JSONBContext;
+import dk.dbc.commons.jsonb.JSONBException;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
