@@ -1,6 +1,6 @@
 package dk.dbc.lobby.rest;
 
-import dk.dbc.dataio.commons.utils.service.ServiceStatus;
+import dk.dbc.serviceutils.ServiceStatus;
 import jakarta.ejb.Stateless;
 import jakarta.ws.rs.Path;
 
