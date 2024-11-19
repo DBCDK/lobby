@@ -1,6 +1,6 @@
 #!groovy
 
-def workerNode = "devel10"
+def workerNode = "devel12"
 
 pipeline {
 	agent {label workerNode}
@@ -11,10 +11,15 @@ pipeline {
 	}
 	environment {
 		GITLAB_PRIVATE_TOKEN = credentials("metascrum-gitlab-api-token")
+		SONAR_SCANNER_HOME = tool 'SonarQube Scanner from Maven Central'
+		SONAR_SCANNER = "$SONAR_SCANNER_HOME/bin/sonar-scanner"
+		SONAR_PROJECT_KEY = "lobby-service"
+		SONAR_SOURCES="src"
+		SONAR_TESTS="test"
 	}
 	triggers {
 		pollSCM("H/03 * * * *")
-		upstream(upstreamProjects: "Docker-payara5-bump-trigger",
+		upstream(upstreamProjects: "Docker-payara6-bump-trigger",
             threshold: hudson.model.Result.SUCCESS)
 	}
 	options {
@@ -32,6 +37,29 @@ pipeline {
 			steps {
 				sh "mvn -D sourcepath=src/main/java verify pmd:pmd javadoc:aggregate"
 				junit "target/surefire-reports/TEST-*.xml"
+			}
+		}
+		stage("sonarqube") {
+			steps {
+				withSonarQubeEnv(installationName: 'sonarqube.dbc.dk') {
+					script {
+						def status = 0
+
+						def sonarOptions = "-Dsonar.branch.name=${BRANCH_NAME}"
+						if (env.BRANCH_NAME != 'master') {
+							sonarOptions += " -Dsonar.newCode.referenceBranch=master"
+						}
+
+						// Do sonar via maven
+						status += sh returnStatus: true, script: """
+                            mvn -B $sonarOptions sonar:sonar
+                        """
+
+						if (status != 0) {
+							error("build failed")
+						}
+					}
+				}
 			}
 		}
 		stage("warnings") {
@@ -52,6 +80,14 @@ pipeline {
 					  pattern: '**/target/pmd.xml',
 					  unstableTotalAll: "0",
 					  failedTotalAll: "0"])
+			}
+		}
+		stage("quality gate") {
+			steps {
+				// wait for analysis results
+				timeout(time: 1, unit: 'HOURS') {
+					waitForQualityGate abortPipeline: true
+				}
 			}
 		}
 		stage("docker push") {

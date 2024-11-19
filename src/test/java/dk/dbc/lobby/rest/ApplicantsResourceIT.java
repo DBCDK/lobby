@@ -1,26 +1,41 @@
 package dk.dbc.lobby.rest;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import dk.dbc.commons.jsonb.JSONBContext;
+import dk.dbc.commons.jsonb.JSONBException;
 import dk.dbc.httpclient.HttpDelete;
 import dk.dbc.httpclient.HttpGet;
+import dk.dbc.httpclient.HttpPost;
 import dk.dbc.httpclient.HttpPut;
 import dk.dbc.httpclient.PathBuilder;
 import org.junit.jupiter.api.Test;
 
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.shaded.org.bouncycastle.util.encoders.Base64;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.in;
 
 class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApplicantsResourceIT.class);
+    private JSONBContext jsonbContext = new JSONBContext();
 
     @Test
     void createOrReplaceApplicant_invalidJson() {
@@ -155,6 +170,54 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
             assertThat("applicant body", response.readEntity(String.class),
                     is("hello world"));
         }
+    }
+
+
+    @Test
+    void getMultipleApplicantBodies() {
+        final int applicantsSize = 9;
+        String baseId = "getApplicantBody";
+        List<String> jsonTestData = getJsonData(applicantsSize);
+        String metaDataTemplate = "{\"id\":\"%s%d\",\"category\":\"changeApplicantState\",\"mimetype\":\"application/metaData\",\"state\":\"PENDING\",\"body\":\"%s\"}";
+
+        // Create <applicantsSize> number of applicants.
+        for (int i = 0; i < applicantsSize; i++) {
+            try(Response response = createOrReplaceApplicant(baseId + i, String.format(metaDataTemplate, baseId, i, Base64.toBase64String(jsonTestData.get(i).getBytes())))) {
+                assertThat(response.getStatus(), in(List.of(200, 201)));
+            }
+        }
+
+        // Do the unified query to get them all back in one batch.
+        String data = "[" + IntStream.range(0, 9).mapToObj(i -> "\"" + baseId + i + "\"").collect(Collectors.joining(", ")) + "]";
+
+        HttpPost httpPost = new HttpPost(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withPathElements(new PathBuilder("/v1/api/applicants/body/bulk")
+                        .build())
+                .withHeader("Content-Type", "application/json")
+                .withData(data, MediaType.APPLICATION_JSON);
+
+        try (Response response = httpClient.execute(httpPost)) {
+            assertThat("response status", response.getStatus(),
+                    is(200));
+            assertThat("response mimetype", response.getMediaType().toString(),
+                    is(MediaType.APPLICATION_JSON));
+            JsonNode json = jsonbContext.getJsonTree(response.readEntity(String.class));
+            if (json.isArray()) {
+                for (int i = 0; i < applicantsSize; i++) {
+                    assertThat("Json Value", json.get(i).findValue("someId").asText(), is("some-data-" + i));
+                }
+            } else {
+                throw new RuntimeException("No array of jsondata found.");
+            }
+
+        } catch (JSONBException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private List<String> getJsonData(int num) {
+        return IntStream.range(0, num).mapToObj(i1 -> String.format("{\"someId\": \"some-data-%d\"}", i1)).collect(Collectors.toList());
     }
 
     @Test
