@@ -6,7 +6,6 @@ pipeline {
 	agent {label workerNode}
 	tools {
 		// refers to the name set in manage jenkins -> global tool configuration
-		jdk 'jdk11'
 		maven "Maven 3"
 	}
 	environment {
@@ -35,7 +34,7 @@ pipeline {
 		}
 		stage("verify") {
 			steps {
-				sh "mvn -D sourcepath=src/main/java verify pmd:pmd javadoc:aggregate"
+				sh "mvn -D sourcepath=src/main/java verify pmd:pmd"
 				junit "target/surefire-reports/TEST-*.xml"
 			}
 		}
