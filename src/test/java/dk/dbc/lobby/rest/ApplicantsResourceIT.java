@@ -188,7 +188,7 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
         }
 
         // Do the unified query to get them all back in one batch.
-        String data = "[" + IntStream.range(0, 9).mapToObj(i -> "\"" + baseId + i + "\"").collect(Collectors.joining(", ")) + "]";
+        String data = "[" + IntStream.range(0, applicantsSize).mapToObj(i -> "\"" + baseId + i + "\"").collect(Collectors.joining(", ")) + "]";
 
         HttpPost httpPost = new HttpPost(httpClient)
                 .withBaseUrl(lobbyServiceBaseUrl)
