@@ -16,6 +16,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.NamedNativeQueries;
 import jakarta.persistence.NamedNativeQuery;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.SqlResultSetMapping;
@@ -28,7 +30,14 @@ import java.util.Date;
         @NamedNativeQuery(
             name = ApplicantEntity.GET_OUTDATED_APPLICANTS,
             query = "SELECT id FROM applicant where state=CAST (? AS applicant_state) and timeOfLastModification<now()-CAST (? AS INTERVAL)",
-            resultClass = ApplicantEntity.class)})
+            resultClass = ApplicantEntity.class),
+        })
+@NamedQueries(
+        @NamedQuery(
+                name = ApplicantEntity.GET_BULK_APPLICANT_BODIES,
+                query = "SELECT abe FROM ApplicantBodyEntity abe WHERE abe.id in :ids"
+        )
+)
 
 @Entity
 @Table(name = "applicant")
@@ -54,6 +63,8 @@ public class ApplicantEntity {
             "applicantResult";
 
     public static final String GET_OUTDATED_APPLICANTS = "getOutdatedApplicants";
+
+    public static  final String GET_BULK_APPLICANT_BODIES = "getBulkApplicants";
 
     // Please note that when used in a query, then the string value MUST be used
     public enum State {

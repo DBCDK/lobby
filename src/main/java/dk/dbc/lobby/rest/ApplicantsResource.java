@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.dbc.lobby.model.ApplicantBodyEntity;
 import dk.dbc.lobby.model.ApplicantEntity;
+import jakarta.ws.rs.POST;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import jakarta.ejb.Stateless;
@@ -27,8 +28,12 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriInfo;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -262,6 +267,40 @@ public class ApplicantsResource {
 
         final StreamingOutput streamingOutput = outputStream -> outputStream.write(applicantBodyEntity.getBody());
         return Response.ok().type(applicantEntity.getMimetype()).entity(streamingOutput).build();
+    }
+
+    /**
+     *
+     * @param ids list of ids. Json. Like [ "id1", "id2", "id3" ].
+     * @return a HTTP 200 ok response streaming applicant bodies.
+     * Returns bodies for the ones that can be found. No warnings for the
+     * ones that can not.
+     * Silently returns empty list, when none of the ids can be found.
+     */
+    @POST
+    @Path("/body/bulk")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getApplicantBodyBulk(List<String> ids) {
+        LOGGER.info("Get body for ids: {}.", ids);
+        TypedQuery<ApplicantBodyEntity> query = entityManager
+                .createNamedQuery(ApplicantEntity.GET_BULK_APPLICANT_BODIES,
+                        ApplicantBodyEntity.class)
+                .setParameter("ids", ids);
+        List<ApplicantBodyEntity> applicantBodyEntities = query.getResultList();
+        StreamingOutput streamingOutput = outputStream -> {
+            Iterator<ApplicantBodyEntity> iterator = applicantBodyEntities.iterator();
+            outputStream.write("[".getBytes(StandardCharsets.UTF_8));
+            while (iterator.hasNext()) {
+                outputStream.write(iterator.next().getBody());
+                if (iterator.hasNext()) {
+                    outputStream.write(", ".getBytes(StandardCharsets.UTF_8));
+                }
+            }
+            outputStream.write("]".getBytes(StandardCharsets.UTF_8));
+        };
+        LOGGER.info("Succesfully delivered {} bodies.", applicantBodyEntities.size());
+        return Response.ok().entity(streamingOutput).build();
     }
 
     @GET
