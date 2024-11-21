@@ -272,7 +272,9 @@ public class ApplicantsResource {
     /**
      *
      * @param ids list of ids. Json. Like [ "id1", "id2", "id3" ].
-     * @return a HTTP 200 ok response streaming applicant bodies,
+     * @return a HTTP 200 ok response streaming applicant bodies.
+     * Returns bodies for the ones that can be found. No warnings for the
+     * ones that can not.
      * Silently returns empty list, when none of the ids can be found.
      */
     @POST
