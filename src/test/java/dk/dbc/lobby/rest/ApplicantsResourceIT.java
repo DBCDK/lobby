@@ -8,6 +8,8 @@ import dk.dbc.httpclient.HttpGet;
 import dk.dbc.httpclient.HttpPost;
 import dk.dbc.httpclient.HttpPut;
 import dk.dbc.httpclient.PathBuilder;
+import dk.dbc.lobby.model.ApplicantEntity;
+import dk.dbc.lobby.model.ApplicantStateList;
 import org.junit.jupiter.api.Test;
 
 import jakarta.ws.rs.core.MediaType;
@@ -23,7 +25,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -135,6 +136,70 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
         }
         assertThat("state updated", getApplicantById(id).get("state"),
                 is("ACCEPTED"));
+    }
+
+    @Test
+    void changeApplicantsState_applicantNotFound() {
+        final HttpPut httpPut = new HttpPut(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withData(new ApplicantStateList()
+                        .withState(ApplicantEntity.State.ACCEPTED)
+                        .withId(List.of("unknown", "even more unknown")), "application/json")
+                .withPathElements("/v1/api/applicants/state");
+
+        try (Response response = httpClient.execute(httpPut)) {
+            assertThat(response.getStatus(), is(200));
+        }
+    }
+
+    @Test
+    void changeApplicantsState_invalidState() {
+        final String id1 = "changeApplicantState_1_invalidState";
+        final String id2 = "changeApplicantState_2_invalidState";
+        createOrReplaceApplicant(id1,
+                "{\"id\":\"" + id1 + "\",\"category\":\"changeApplicantState\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
+        createOrReplaceApplicant(id2,
+                "{\"id\":\"" + id2 + "\",\"category\":\"changeApplicantState\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
+
+        final HttpPut httpPut = new HttpPut(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withData("{\"state\":\"NOT_A_KNOWN_STATE\",\"id\":[\"" + id1 + "\",\"" + id2 + "\"]}", "application/json")
+                .withPathElements("/v1/api/applicants/state");
+
+        try (Response response = httpClient.execute(httpPut)) {
+            assertThat(response.getStatus(), is(400));
+        }
+    }
+
+    @Test
+    void changeApplicantsState() {
+        final String id1 = "changeApplicantState_1";
+        final String id2 = "changeApplicantState_2";
+        final String id3 = "changeApplicantState_3";
+        createOrReplaceApplicant(id1,
+                "{\"id\":\"" + id1 + "\",\"category\":\"changeApplicantState\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
+        createOrReplaceApplicant(id2,
+                "{\"id\":\"" + id2 + "\",\"category\":\"changeApplicantState\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
+        createOrReplaceApplicant(id3,
+                "{\"id\":\"" + id3 + "\",\"category\":\"changeApplicantState\",\"mimetype\":\"text/plain\",\"state\":\"PENDING\",\"body\":\"aGVsbG8gd29ybGQ=\"}");
+
+        final HttpPut httpPut = new HttpPut(httpClient)
+                .withBaseUrl(lobbyServiceBaseUrl)
+                .withData(new ApplicantStateList()
+                        .withState(ApplicantEntity.State.ACCEPTED)
+                        .withId(List.of(id1, id2)), "application/json")
+                .withPathElements("/v1/api/applicants/state");
+
+        try (Response response = httpClient.execute(httpPut)) {
+            assertThat("response status", response.getStatus(),
+                    is(200));
+        }
+        assertThat("state updated", getApplicantById(id1).get("state"),
+                is("ACCEPTED"));
+        assertThat("state updated", getApplicantById(id2).get("state"),
+                is("ACCEPTED"));
+        assertThat("state not updated", getApplicantById(id3).get("state"),
+                is("PENDING"));
     }
 
     @Test

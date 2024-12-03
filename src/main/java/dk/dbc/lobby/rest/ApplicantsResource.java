@@ -5,6 +5,8 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.dbc.lobby.model.ApplicantBodyEntity;
 import dk.dbc.lobby.model.ApplicantEntity;
+import dk.dbc.lobby.model.ApplicantStateList;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +31,6 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriInfo;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,6 +47,8 @@ public class ApplicantsResource {
 
     @PersistenceContext(unitName = "lobbyPU")
     private EntityManager entityManager;
+
+    private static final String ILLEGAL_STATE_VALUE = "Illegal state value ";
 
     /**
      * Creates applicant resource with ID specified by the path
@@ -98,7 +101,7 @@ public class ApplicantsResource {
     }
 
     private void purgeApplicantsByStateAndAge(ApplicantEntity.State state, String age) {
-        LOGGER.info("Purge {} aged {}.", state.toString(), age);
+        LOGGER.info("Purge {} aged {}.", state, age);
         final TypedQuery<ApplicantEntity> query = entityManager
                 .createNamedQuery(ApplicantEntity.GET_OUTDATED_APPLICANTS,
                         ApplicantEntity.class)
@@ -121,7 +124,7 @@ public class ApplicantsResource {
      */
     @DELETE
     public Response clean() {
-        final Map<ApplicantEntity.State, String> purgeRules = new HashMap<ApplicantEntity.State, String>() {{
+        final Map<ApplicantEntity.State, String> purgeRules = new HashMap<>() {{
             put(ApplicantEntity.State.ACCEPTED, "4 weeks");
         }};
         try {
@@ -150,15 +153,33 @@ public class ApplicantsResource {
     @Path("/{id}/state")
     @Consumes(MediaType.TEXT_PLAIN)
     public Response changeApplicantState(@PathParam("id") String id, String stateStr) {
-        final ApplicantEntity applicantEntity = entityManager.find(ApplicantEntity.class, id);
-        if (applicantEntity == null) {
-            return Response.status(410).entity("Applicant not found").build();
-        }
+
         try {
             final ApplicantEntity.State state = ApplicantEntity.State.valueOf(stateStr);
-            applicantEntity.setState(state);
-        } catch (IllegalArgumentException e) {
-            return Response.status(422).entity("Illegal state value " + stateStr).build();
+            changeApplicantState(id, state);
+        } catch(NotFoundException e) {
+            return Response.status(410).entity(e.getMessage()).build();
+        } catch(IllegalArgumentException e) {
+            return Response.status(422).entity(ILLEGAL_STATE_VALUE + stateStr).build();
+        }
+        return Response.ok().build();
+    }
+
+    /**
+     * Changes state of applicant resources with ID specified by a list
+     * @param applicantStateList List of applicant ids and the state they should be set to
+     * @return HTTP 200 Ok response when matching applicants has their state replaced. There can be 0 matching applicants
+     */
+    @PUT
+    @Path("/state")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response changeApplicantsState(ApplicantStateList applicantStateList) {
+        for (String id : applicantStateList.getId()) {
+            try {
+                changeApplicantState(id, applicantStateList.getState());
+            } catch(NotFoundException e) {
+                LOGGER.warn("Application {} not found. Error is silently ignored.", id);
+            }
         }
         return Response.ok().build();
     }
@@ -185,13 +206,13 @@ public class ApplicantsResource {
                 state = ApplicantEntity.State.valueOf(stateStr);
             }
         } catch (IllegalArgumentException e) {
-            return Response.status(422).entity("Illegal state value " + stateStr).build();
+            return Response.status(422).entity(ILLEGAL_STATE_VALUE + stateStr).build();
         }
 
         final QueryBuilder queryBuilder = new QueryBuilder(ApplicantEntity.GET_APPLICANTS_QUERY)
                 .and("applicant.category", category)
                 .and("applicant.state", state);
-        LOGGER.debug("GET /applicants query {}", queryBuilder.toString());
+        LOGGER.debug("GET /applicants query {}", queryBuilder);
 
         @SuppressWarnings("unchecked")
         final List<ApplicantEntity> resultSet = queryBuilder.build(entityManager).getResultList();
@@ -226,7 +247,7 @@ public class ApplicantsResource {
                 state = ApplicantEntity.State.valueOf(stateStr);
             }
         } catch (IllegalArgumentException e) {
-            return Response.status(422).entity("Illegal state value " + stateStr).build();
+            return Response.status(422).entity(ILLEGAL_STATE_VALUE + stateStr).build();
         }
 
         Map<String, String> additionalFilters = getAdditionalFilters(uriInfo);
@@ -240,7 +261,7 @@ public class ApplicantsResource {
         for (String name : additionalFilters.keySet()) {
             queryBuilder = queryBuilder.json(name, additionalFilters.get(name));
         }
-        LOGGER.info("GET /applicants/additionalFilter query {}", queryBuilder.toString());
+        LOGGER.info("GET /applicants/additionalFilter query {}", queryBuilder);
 
         @SuppressWarnings("unchecked")
         final List<ApplicantEntity> resultSet = (List<ApplicantEntity>) queryBuilder.build(entityManager).getResultList();
@@ -347,5 +368,13 @@ public class ApplicantsResource {
         }
 
         return additionalParameters;
+    }
+
+    private void changeApplicantState(String id, ApplicantEntity.State state) throws NotFoundException{
+        final ApplicantEntity applicantEntity = entityManager.find(ApplicantEntity.class, id);
+        if (applicantEntity == null) {
+            throw new NotFoundException("Applicant " + id + " not found");
+        }
+        applicantEntity.setState(state);
     }
 }
