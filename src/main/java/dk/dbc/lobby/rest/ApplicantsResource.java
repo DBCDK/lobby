@@ -33,6 +33,7 @@ import jakarta.ws.rs.core.UriInfo;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -124,9 +125,9 @@ public class ApplicantsResource {
      */
     @DELETE
     public Response clean() {
-        final Map<ApplicantEntity.State, String> purgeRules = new HashMap<>() {{
-            put(ApplicantEntity.State.ACCEPTED, "4 weeks");
-        }};
+        final EnumMap<ApplicantEntity.State, String> purgeRules = new EnumMap<>(ApplicantEntity.State.class);
+        purgeRules.put(ApplicantEntity.State.ACCEPTED, "4 weeks");
+
         try {
             purgeRules.forEach((state,age) -> {
                 LOGGER.info("Deleting applicants with {} older than {}", state, age);
@@ -258,13 +259,13 @@ public class ApplicantsResource {
         if (stateStr != null && !stateStr.isEmpty()) {
             queryBuilder.and("CAST(applicant.state AS TEXT)", String.format("%s", state));
         }
-        for (String name : additionalFilters.keySet()) {
-            queryBuilder = queryBuilder.json(name, additionalFilters.get(name));
+        for (Map.Entry<String, String> entry : additionalFilters.entrySet()) {
+            queryBuilder = queryBuilder.json(entry.getKey(), entry.getValue());
         }
         LOGGER.info("GET /applicants/additionalFilter query {}", queryBuilder);
 
         @SuppressWarnings("unchecked")
-        final List<ApplicantEntity> resultSet = (List<ApplicantEntity>) queryBuilder.build(entityManager).getResultList();
+        final List<ApplicantEntity> resultSet = queryBuilder.build(entityManager).getResultList();
         return getStreamingResponse(resultSet);
     }
 

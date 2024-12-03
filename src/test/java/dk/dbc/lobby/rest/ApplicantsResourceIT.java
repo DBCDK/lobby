@@ -36,7 +36,7 @@ import static org.hamcrest.Matchers.in;
 
 class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicantsResourceIT.class);
-    private JSONBContext jsonbContext = new JSONBContext();
+    private final JSONBContext jsonbContext = new JSONBContext();
 
     @Test
     void createOrReplaceApplicant_invalidJson() {
@@ -416,7 +416,7 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                     is(200));
             json = response.readEntity(String.class);
         }
-        assertThat("getApplicants-1 in response", json,
+        assertThat("getApplicants-1 not in response", json,
                 not(containsString("\"id\":\"getApplicants-1\"")));
         assertThat("getApplicants-2 not in response", json,
                 not(containsString("\"id\":\"getApplicants-2\"")));
