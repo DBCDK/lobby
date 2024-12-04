@@ -175,7 +175,7 @@ public class ApplicantsResource {
     @Path("/state")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response changeApplicantsState(ApplicantStateList applicantStateList) {
-        for (String id : applicantStateList.getId()) {
+        for (String id : applicantStateList.getIds()) {
             try {
                 changeApplicantState(id, applicantStateList.getState());
             } catch(NotFoundException e) {

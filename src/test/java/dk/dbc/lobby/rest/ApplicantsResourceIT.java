@@ -144,7 +144,7 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                 .withBaseUrl(lobbyServiceBaseUrl)
                 .withData(new ApplicantStateList()
                         .withState(ApplicantEntity.State.ACCEPTED)
-                        .withId(List.of("unknown", "even more unknown")), "application/json")
+                        .withIds(List.of("unknown", "even more unknown")), "application/json")
                 .withPathElements("/v1/api/applicants/state");
 
         try (Response response = httpClient.execute(httpPut)) {
@@ -163,7 +163,7 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
 
         final HttpPut httpPut = new HttpPut(httpClient)
                 .withBaseUrl(lobbyServiceBaseUrl)
-                .withData("{\"state\":\"NOT_A_KNOWN_STATE\",\"id\":[\"" + id1 + "\",\"" + id2 + "\"]}", "application/json")
+                .withData("{\"state\":\"NOT_A_KNOWN_STATE\",\"ids\":[\"" + id1 + "\",\"" + id2 + "\"]}", "application/json")
                 .withPathElements("/v1/api/applicants/state");
 
         try (Response response = httpClient.execute(httpPut)) {
@@ -187,7 +187,7 @@ class ApplicantsResourceIT extends AbstractLobbyServiceContainerTest {
                 .withBaseUrl(lobbyServiceBaseUrl)
                 .withData(new ApplicantStateList()
                         .withState(ApplicantEntity.State.ACCEPTED)
-                        .withId(List.of(id1, id2)), "application/json")
+                        .withIds(List.of(id1, id2)), "application/json")
                 .withPathElements("/v1/api/applicants/state");
 
         try (Response response = httpClient.execute(httpPut)) {

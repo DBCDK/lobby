@@ -6,18 +6,18 @@ public class ApplicantStateList {
 
     private ApplicantEntity.State state;
 
-    private List<String> id;
+    private List<String> ids;
 
-    public List<String> getId() {
-        return id;
+    public List<String> getIds() {
+        return ids;
     }
 
-    public void setId(List<String> id) {
-        this.id = id;
+    public void setIds(List<String> ids) {
+        this.ids = ids;
     }
 
-    public ApplicantStateList withId(List<String> id) {
-        this.id = id;
+    public ApplicantStateList withIds(List<String> ids) {
+        this.ids = ids;
         return this;
     }
 
@@ -32,5 +32,13 @@ public class ApplicantStateList {
     public ApplicantStateList withState(ApplicantEntity.State state) {
         this.state = state;
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return "ApplicantStateList{" +
+                "state=" + state +
+                ", ids=" + ids +
+                '}';
     }
 }
