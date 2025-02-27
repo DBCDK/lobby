@@ -4,5 +4,8 @@
     "jdbc/lobby": {
       "url": "${LOBBY_DB_URL}"
     }
+  },
+  "hazelcast": {
+    "clusterName": "${LOBBY_CLUSTER_NAME}"
   }
 }
