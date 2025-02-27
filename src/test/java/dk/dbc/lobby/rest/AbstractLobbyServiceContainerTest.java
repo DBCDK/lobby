@@ -9,10 +9,7 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.time.Duration;
 
@@ -32,6 +29,7 @@ public abstract class AbstractLobbyServiceContainerTest {
                 .withEnv("JAVA_MAX_HEAP_SIZE", "2G")
                 .withEnv("LOG_FORMAT", "text")
                 .withEnv("LOBBY_DB_URL", db.getPayaraDockerJdbcUrl())
+                .withEnv("LOBBY_CLUSTER_NAME", "")
                 .withNetwork(network)
                 .withExposedPorts(8080)
                 .waitingFor(Wait.forHttp("/status"))
