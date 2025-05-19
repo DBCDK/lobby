@@ -1,6 +1,8 @@
 #!groovy
 
 def workerNode = "devel12"
+def teamSlackNotice = 'team-x-notice'
+def teamSlackWarning = 'team-x-warning'
 
 pipeline {
 	agent {label workerNode}
@@ -119,4 +121,40 @@ pipeline {
 			}
 		}
 	}
+	post {
+        failure {
+            script {
+                if (BRANCH_NAME == "main") {
+                    slackSend(channel: "${teamSlackWarning}",
+                            color: 'warning',
+                            message: "${JOB_NAME} #${BUILD_NUMBER} failed and needs attention: ${BUILD_URL}",
+                            tokenCredentialId: 'slack-global-integration-token')
+                }
+            }
+            updateGitlabCommitStatus name: 'build', state: 'failed'
+        }
+        success {
+            script {
+                if (BRANCH_NAME == 'main') {
+                    slackSend(channel: "${teamSlackNotice}",
+                            color: 'good',
+                            message: "${JOB_NAME} #${BUILD_NUMBER} completed, and pushed ${IMAGE} to artifactory.",
+                            tokenCredentialId: 'slack-global-integration-token')
+
+                }
+            }
+            updateGitlabCommitStatus name: 'build', state: 'success'
+        }
+        fixed {
+            script {
+                if (BRANCH_NAME == 'main') {
+                    slackSend(channel: "${teamSlackNotice}",
+                            color: 'good',
+                            message: "${JOB_NAME} #${BUILD_NUMBER} back to normal: ${BUILD_URL}",
+                            tokenCredentialId: 'slack-global-integration-token')
+                }
+            }
+            updateGitlabCommitStatus name: 'build', state: 'success'
+        }
+    }
 }
