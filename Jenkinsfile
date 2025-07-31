@@ -101,25 +101,22 @@ pipeline {
 				}
 			}
 		}
-		stage("bump docker tag in lobby-secrets") {
-			agent {
-				docker {
-					label workerNode
-					image "docker-dbc.artifacts.dbccloud.dk/build-env:latest"
-					alwaysPull true
-				}
-			}
-			when {
-				branch "master"
-			}
-			steps {
-				script {
-					sh """  
-            set-new-version services/lobby.yml ${env.GITLAB_PRIVATE_TOKEN} metascrum/lobby-secrets  ${env.BRANCH_NAME}-${env.BUILD_NUMBER} -b staging
-          """
-				}
-			}
-		}
+		stage("Update staging version number") {
+                   when {
+                       branch "main"
+                   }
+                   steps {
+                       script {
+                           withCredentials([sshUserPrivateKey(credentialsId: "gitlab-isworker", keyFileVariable: "sshkeyfile")]) {
+                               env.GIT_SSH_COMMAND = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${sshkeyfile}"
+                               sh """
+                                   nix run --refresh git+https://gitlab.dbc.dk/public-de-team/gitops-secrets-set-variables.git \
+                                       metascrum-staging:LOBBY_SERVICE_VERSION=${env.BRANCH_NAME}-${env.BUILD_NUMBER}
+                               """
+                           }
+                       }
+                   }
+               }
 	}
 	post {
         failure {
