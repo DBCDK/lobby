@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.dbc.lobby.model.ApplicantBodyEntity;
 import dk.dbc.lobby.model.ApplicantEntity;
 import dk.dbc.lobby.model.ApplicantStateList;
+import jakarta.persistence.CacheRetrieveMode;
+import jakarta.persistence.CacheStoreMode;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import org.slf4j.Logger;
@@ -309,6 +311,7 @@ public class ApplicantsResource {
                 .createNamedQuery(ApplicantEntity.GET_BULK_APPLICANT_BODIES,
                         ApplicantBodyEntity.class)
                 .setParameter("ids", ids);
+        disableCache(query);
         List<ApplicantBodyEntity> applicantBodyEntities = query.getResultList();
         StreamingOutput streamingOutput = outputStream -> {
             Iterator<ApplicantBodyEntity> iterator = applicantBodyEntities.iterator();
@@ -333,7 +336,7 @@ public class ApplicantsResource {
         if (applicantEntity == null) {
             return Response.status(410).entity("Applicant not found").build();
         }
-
+        entityManager.refresh(applicantEntity);
         return Response.ok().entity(applicantEntity).build();
     }
 
@@ -378,4 +381,10 @@ public class ApplicantsResource {
         }
         applicantEntity.setState(state);
     }
+
+    private void disableCache(TypedQuery<ApplicantBodyEntity> query) {
+        query.setHint("javax.persistence.cache.retrieveMode", CacheRetrieveMode.BYPASS);
+        query.setHint("javax.persistence.cache.storeMode", CacheStoreMode.BYPASS);
+    }
+
 }
