@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import dk.dbc.commons.jsonb.JSONBContext;
 import dk.dbc.commons.jsonb.JSONBException;
 import dk.dbc.lobby.JsonNodeConverter;
+import jakarta.persistence.Cacheable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ColumnResult;
 import jakarta.persistence.ConstructorResult;
@@ -53,6 +54,7 @@ import java.util.Date;
                         @ColumnResult(name="timeOfLastModification"),
                         @ColumnResult(name="additionalInfo")})
 })
+@Cacheable(false)
 public class ApplicantEntity {
     public static final String GET_APPLICANTS_QUERY =
             "SELECT applicant FROM ApplicantEntity applicant";
