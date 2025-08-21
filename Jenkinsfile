@@ -103,7 +103,7 @@ pipeline {
 		}
 		stage("Update staging version number") {
                    when {
-                       branch "main"
+                       branch "master"
                    }
                    steps {
                        script {
@@ -112,6 +112,8 @@ pipeline {
                                sh """
                                    nix run --refresh git+https://gitlab.dbc.dk/public-de-team/gitops-secrets-set-variables.git \
                                        metascrum-staging:LOBBY_SERVICE_VERSION=${env.BRANCH_NAME}-${env.BUILD_NUMBER}
+                                   nix run --refresh git+https://gitlab.dbc.dk/public-de-team/gitops-secrets-set-variables.git \
+                                       fbstest:LOBBY_SERVICE_VERSION=${env.BRANCH_NAME}-${env.BUILD_NUMBER}
                                """
                            }
                        }
@@ -121,37 +123,34 @@ pipeline {
 	post {
         failure {
             script {
-                if (BRANCH_NAME == "main") {
+                if (BRANCH_NAME == "master") {
                     slackSend(channel: "${teamSlackWarning}",
                             color: 'warning',
                             message: "${JOB_NAME} #${BUILD_NUMBER} failed and needs attention: ${BUILD_URL}",
                             tokenCredentialId: 'slack-global-integration-token')
                 }
             }
-            updateGitlabCommitStatus name: 'build', state: 'failed'
         }
         success {
             script {
-                if (BRANCH_NAME == 'main') {
+                if (BRANCH_NAME == 'master') {
                     slackSend(channel: "${teamSlackNotice}",
                             color: 'good',
-                            message: "${JOB_NAME} #${BUILD_NUMBER} completed, and pushed ${IMAGE} to artifactory.",
+                            message: "${JOB_NAME} #${BUILD_NUMBER} completed.",
                             tokenCredentialId: 'slack-global-integration-token')
 
                 }
             }
-            updateGitlabCommitStatus name: 'build', state: 'success'
         }
         fixed {
             script {
-                if (BRANCH_NAME == 'main') {
+                if (BRANCH_NAME == 'master') {
                     slackSend(channel: "${teamSlackWarning}",
                             color: 'good',
                             message: "${JOB_NAME} #${BUILD_NUMBER} back to normal: ${BUILD_URL}",
                             tokenCredentialId: 'slack-global-integration-token')
                 }
             }
-            updateGitlabCommitStatus name: 'build', state: 'success'
         }
     }
 }
