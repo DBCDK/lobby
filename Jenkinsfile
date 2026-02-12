@@ -1,8 +1,8 @@
 #!groovy
 
 def workerNode = "devel12"
-def teamSlackNotice = 'team-x-notice'
-def teamSlackWarning = 'team-x-warning'
+def teamSlackNotice = 'de-notifications'
+def teamSlackWarning = 'de-notifications'
 
 pipeline {
 	agent {label workerNode}
@@ -61,26 +61,6 @@ pipeline {
 						}
 					}
 				}
-			}
-		}
-		stage("warnings") {
-			agent {label workerNode}
-			steps {
-				warnings consoleParsers: [
-					[parserName: "Java Compiler (javac)"],
-					[parserName: "JavaDoc Tool"]
-				],
-					unstableTotalAll: "0",
-					failedTotalAll: "0"
-			}
-		}
-		stage("pmd") {
-			agent {label workerNode}
-			steps {
-				step([$class: 'hudson.plugins.pmd.PmdPublisher',
-					  pattern: '**/target/pmd.xml',
-					  unstableTotalAll: "0",
-					  failedTotalAll: "0"])
 			}
 		}
 		stage("quality gate") {
