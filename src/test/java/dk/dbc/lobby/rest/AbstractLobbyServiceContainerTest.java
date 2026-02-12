@@ -1,6 +1,7 @@
 package dk.dbc.lobby.rest;
 
 import dk.dbc.commons.testcontainers.postgres.DBCPostgreSQLContainer;
+import dk.dbc.commons.useragent.UserAgent;
 import dk.dbc.httpclient.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,7 @@ public abstract class AbstractLobbyServiceContainerTest {
     static final DBCPostgreSQLContainer LOBBY_DB = startLobbyDB(NETWORK);
     static final GenericContainer<?> lobbyServiceContainer = startLobby(LOBBY_DB, NETWORK);
     static final String lobbyServiceBaseUrl = "http://" + lobbyServiceContainer.getHost() + ":" + lobbyServiceContainer.getMappedPort(8080);
-    static final HttpClient httpClient = HttpClient.create(HttpClient.newClient());
+    static final HttpClient httpClient = HttpClient.create(HttpClient.newClient(), new UserAgent("lobby-service-IT"));
 
 
     private static GenericContainer<?> startLobby(DBCPostgreSQLContainer db, Network network) {
